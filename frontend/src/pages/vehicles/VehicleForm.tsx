@@ -12,8 +12,6 @@ import {
 import './vehicleForm.module.css';
 import '../../styles/util.css';
 import { DeleteConfirmationModal } from '../../utils/DeleteConfirmationModal';
-import config from '../../config';
-import { getAuthHeaders } from '../../utils/ApiUtils';
 
 type VehicleFormMode = 'create' | 'edit' | 'view';
 

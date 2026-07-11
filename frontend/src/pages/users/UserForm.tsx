@@ -244,10 +244,12 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
     fetchUserTypes();
   }, []);
 
+  const managesAllCondominiums = canManageAllCondominiums();
+
   useEffect(() => {
     const fetchTowers = async () => {
       try {
-        const condominiumId = canManageAllCondominiums()
+        const condominiumId = managesAllCondominiums
           ? userData.condominiumId
           : currentUserCondominium?.id;
 
@@ -276,7 +278,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
     };
 
     fetchTowers();
-  }, [userData.condominiumId, currentUserCondominium]);
+  }, [userData.condominiumId, currentUserCondominium, managesAllCondominiums]);
 
   const handleGoToDashboard = () => {
     navigate('/dashboard');

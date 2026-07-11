@@ -33,10 +33,6 @@ export const usePermissions = () => {
     return registerableUserTypes?.includes(userType);
   };
 
-  const canViewUsers = (userType: string): boolean => {
-    return user?.permissions?.canViewUsers ?? false;
-  };
-
   const getAllowedRecipientTypes = () => {
     return user?.permissions.allowedRecipientTypes ?? [];
   };
