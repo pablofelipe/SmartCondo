@@ -1,0 +1,123 @@
+@font-face {
+  font-family: 'icomoon';
+  src:  url('fonts/icomoon.eot?w6ckh4');
+  src:  url('fonts/icomoon.eot?w6ckh4#iefix') format('embedded-opentype'),
+    url('fonts/icomoon.ttf?w6ckh4') format('truetype'),
+    url('fonts/icomoon.woff?w6ckh4') format('woff'),
+    url('fonts/icomoon.svg?w6ckh4#icomoon') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'icomoon' !important;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/* Ícone padrão */
+.icon-smartCondo:before {
+  content: "\e900"; /* Use o código Unicode do primeiro caminho */
+  font-size: 200px; /* Tamanho padrão para desktop */
+  color: black; /* Defina uma cor única para o ícone */
+  margin-left: -0.20em;
+}
+
+/* Ícone pequeno */
+.icon-smartCondo.small:before {
+  font-size: 150px; /* Tamanho menor para desktop */
+}
+
+/* Ícone grande */
+.icon-smartCondo.large:before {
+  font-size: 250px; /* Tamanho maior para desktop */
+}
+
+/* Ícone pequeno e branco */
+.icon-smartCondo.small.white:before {
+  font-size: 150px; /* Tamanho menor para desktop */
+  color: white;
+}
+
+/* Ícone grande e branco */
+.icon-smartCondo.large.white:before {
+  font-size: 250px; /* Tamanho maior para desktop */
+  color: white;
+}
+
+/* Ajustes para dispositivos móveis (até 576px) */
+@media (max-width: 576px) {
+  .icon-smartCondo:before {
+    font-size: 100px; /* Tamanho menor para mobile */
+  }
+
+  .icon-smartCondo.small:before {
+    font-size: 80px; /* Tamanho menor para mobile */
+  }
+
+  .icon-smartCondo.large:before {
+    font-size: 120px; /* Tamanho maior para mobile */
+  }
+
+  .icon-smartCondo.small.white:before {
+    font-size: 80px; /* Tamanho menor para mobile */
+  }
+
+  .icon-smartCondo.large.white:before {
+    font-size: 120px; /* Tamanho maior para mobile */
+  }
+}
+
+/* Ajustes para tablets (de 577px a 992px) */
+@media (min-width: 577px) and (max-width: 992px) {
+  .icon-smartCondo:before {
+    font-size: 150px; /* Tamanho intermediário para tablets */
+  }
+
+  .icon-smartCondo.small:before {
+    font-size: 120px; /* Tamanho menor para tablets */
+  }
+
+  .icon-smartCondo.large:before {
+    font-size: 180px; /* Tamanho maior para tablets */
+  }
+
+  .icon-smartCondo.small.white:before {
+    font-size: 120px; /* Tamanho menor para tablets */
+  }
+
+  .icon-smartCondo.large.white:before {
+    font-size: 180px; /* Tamanho maior para tablets */
+  }
+}
+
+/* Ajustes para desktops (acima de 993px) */
+@media (min-width: 993px) {
+  .icon-smartCondo:before {
+    font-size: 200px; /* Tamanho padrão para desktop */
+  }
+
+  .icon-smartCondo.small:before {
+    font-size: 150px; /* Tamanho menor para desktop */
+  }
+
+  .icon-smartCondo.large:before {
+    font-size: 250px; /* Tamanho maior para desktop */
+  }
+
+  .icon-smartCondo.small.white:before {
+    font-size: 150px; /* Tamanho menor para desktop */
+  }
+
+  .icon-smartCondo.large.white:before {
+    font-size: 250px; /* Tamanho maior para desktop */
+  }
+}

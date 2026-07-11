@@ -1,0 +1,107 @@
+/* Estilo para textarea */
+textarea.input100 {
+  min-height: 120px;
+  resize: vertical;
+  padding-top: 15px;
+}
+
+/* Ajuste para campos numéricos */
+input[type='number'].input100 {
+  -moz-appearance: textfield;
+}
+
+input[type='number'].input100::-webkit-outer-spin-button,
+input[type='number'].input100::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Espaçamento entre grupos de campos */
+.field-group {
+  margin-bottom: 25px;
+}
+
+/* Estilo para mensagens de erro */
+.error-message {
+  color: #c80000;
+  font-size: 14px;
+  margin-top: 5px;
+  text-align: center;
+}
+
+/* Ajuste para o título */
+.main-form-title {
+  margin-bottom: 30px;
+}
+
+/* Estilo para o ícone */
+.icon-smartCondo.large {
+  font-size: 60px;
+  color: #6a7dfe;
+  margin-bottom: 15px;
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.form-title {
+  font-size: 1.5rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.form-subtitle {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Para telas menores que 768px (mobile) */
+@media (max-width: 768px) {
+  .search-fields {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .search-fields input,
+  .container-btn100-form-btn {
+    width: 100% !important;
+    flex: 1 1 auto !important;
+  }
+}
+
+.toast-success {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #6a7dfe;
+  color: white;
+  padding: 16px;
+  border-radius: 4px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeIn 0.3s;
+}
+
+.toast-success button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    bottom: 0;
+  }
+  to {
+    opacity: 1;
+    bottom: 20px;
+  }
+}

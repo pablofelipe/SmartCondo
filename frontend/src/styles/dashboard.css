@@ -1,0 +1,194 @@
+/* ================================================== */
+/* Regras Gerais (aplicam-se a todos os dispositivos) */
+/* ================================================== */
+
+.dashboard-container {
+  display: flex;
+  height: 100vh;
+}
+
+/* Botão de menu para mobile */
+.menu-toggle {
+  display: none; /* Oculta o botão por padrão */
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+}
+
+/* Sidebar de navegação */
+.sidebar {
+  width: 250px; /* Largura padrão para desktops */
+  background: #1e1e2f;
+  color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.3s ease; /* Adiciona transição suave */
+}
+
+/* Área principal */
+.dashboard-content {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+/* Cabeçalho do dashboard */
+.dashboard-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  text-align: center;
+}
+
+/* Estatísticas (cards) */
+.dashboard-stats {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+/* Cards individuais */
+.card {
+  flex: 1;
+  background: #f4f4f4;
+  padding: 20px;
+  border-radius: 5px;
+  text-align: center;
+  font-size: 18px;
+}
+
+/* Navegação dentro do sidebar */
+nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Botão de logout */
+.logout-btn {
+  width: 100%;
+  padding: 10px 20px;
+  background-color: #999999;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.logout-btn:hover {
+  background-color: #32324a;
+}
+
+/* ================================================== */
+/* Ajustes para Dispositivos Móveis (até 576px) */
+/* ================================================== */
+
+@media (max-width: 576px) {
+  /* Exibe o botão de menu em mobile */
+  .menu-toggle {
+    display: block;
+  }
+
+  /* Sidebar oculto por padrão em mobile */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    transform: translateX(-100%); /* Oculta o sidebar */
+    z-index: 999;
+  }
+
+  /* Sidebar visível quando a classe "visible" é aplicada */
+  .sidebar.visible {
+    transform: translateX(0); /* Exibe o sidebar */
+  }
+
+  /* Remove o espaço do sidebar em mobile */
+  .dashboard-content {
+    margin-left: 0;
+  }
+
+  /* Ajustes para os cards em mobile */
+  .dashboard-stats {
+    flex-direction: column; /* Coloca os cards em coluna */
+    gap: 10px; /* Reduz o espaçamento entre os cards */
+  }
+
+  .card {
+    width: 100%; /* Ocupa toda a largura */
+    font-size: 16px; /* Reduz o tamanho da fonte */
+  }
+
+  /* Ajustes para o botão de logout em mobile */
+  .logout-btn {
+    padding: 8px 16px; /* Padding menor */
+    font-size: 14px; /* Fonte menor */
+  }
+}
+
+/* ================================================== */
+/* Ajustes para Tablets (de 577px a 992px) */
+/* ================================================== */
+
+@media (min-width: 577px) and (max-width: 992px) {
+  /* Sidebar com largura menor para tablets */
+  .sidebar {
+    width: 200px;
+    padding: 15px;
+  }
+
+  /* Ajustes para os cards em tablets */
+  .dashboard-stats {
+    gap: 15px; /* Espaçamento intermediário entre os cards */
+  }
+
+  .card {
+    font-size: 18px; /* Tamanho de fonte intermediário */
+  }
+
+  /* Ajustes para o botão de logout em tablets */
+  .logout-btn {
+    padding: 10px 18px; /* Padding intermediário */
+    font-size: 15px; /* Fonte intermediária */
+  }
+}
+
+/* ================================================== */
+/* Ajustes para Desktops (acima de 993px) */
+/* ================================================== */
+
+@media (min-width: 993px) {
+  /* Sidebar com largura padrão para desktops */
+  .sidebar {
+    width: 250px;
+    padding: 20px;
+  }
+
+  /* Ajustes para os cards em desktops */
+  .dashboard-stats {
+    gap: 20px; /* Espaçamento padrão entre os cards */
+  }
+
+  .card {
+    font-size: 20px; /* Tamanho de fonte padrão */
+  }
+
+  /* Ajustes para o botão de logout em desktops */
+  .logout-btn {
+    padding: 10px 20px; /* Padding padrão */
+    font-size: 16px; /* Fonte padrão */
+  }
+}

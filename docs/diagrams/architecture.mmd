@@ -1,0 +1,20 @@
+flowchart LR
+    subgraph Client
+        Browser["React PWA (nginx)"]
+    end
+
+    subgraph Backend["ASP.NET Core 8 API"]
+        REST["REST controllers /api/v1"]
+        GQL["GraphQL /graphql"]
+        SVC["Domain services"]
+        EF["EF Core (Npgsql)"]
+        REST --> SVC
+        GQL --> SVC
+        SVC --> EF
+    end
+
+    Browser -->|REST| REST
+    Browser -->|GraphQL| GQL
+    EF --> DB[("PostgreSQL 16")]
+    SVC -->|SMTP| Mail["E-mail provider"]
+    SVC -->|WebSocket push| APIGW["AWS API Gateway (optional)"]

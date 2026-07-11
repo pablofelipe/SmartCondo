@@ -1,0 +1,11 @@
+sequenceDiagram
+    participant C as Client
+    participant A as API
+    participant DB as PostgreSQL
+
+    C->>A: POST /api/v1/auth/login { user, secret }
+    A->>DB: load user + profile + roles (Identity)
+    A->>A: verify password, lockout, enabled, e-mail confirmed
+    A-->>C: 200 { token, user } | 4xx domain error
+    C->>A: Authorization: Bearer <token>
+    A->>A: validate issuer, audience, lifetime, signature

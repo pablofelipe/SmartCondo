@@ -1,0 +1,7 @@
+{
+  "profile": "default",
+  "region": "sa-east-1",
+  "configuration": "Release",
+  "framework": "net8.0",
+  "function-handler": "SmartCondoApi::SmartCondoApi.LambdaEntryPoint::FunctionHandlerAsync"
+}

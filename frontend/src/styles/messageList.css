@@ -1,0 +1,205 @@
+/* Estilo para textarea */
+textarea.input100 {
+  min-height: 120px;
+  resize: vertical;
+  padding-top: 15px;
+}
+
+/* Ajuste para campos numéricos */
+/*
+  input[type="number"].input100 {
+    -moz-appearance: textfield;
+  }
+  */
+
+input[type='number'].input100::-webkit-outer-spin-button,
+input[type='number'].input100::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Espaçamento entre grupos de campos */
+.field-group {
+  margin-bottom: 25px;
+}
+
+/* Estilo para mensagens de erro */
+.error-message {
+  color: #c80000;
+  font-size: 14px;
+  margin-top: 5px;
+  text-align: center;
+}
+
+/* Ajuste para o título */
+.main-form-title {
+  margin-bottom: 30px;
+}
+
+/* Estilo para o ícone */
+.icon-smartCondo.large {
+  font-size: 60px;
+  color: #6a7dfe;
+  margin-bottom: 15px;
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.form-title {
+  font-size: 1.5rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.form-subtitle {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Para telas menores que 768px (mobile) */
+@media (max-width: 768px) {
+  .search-fields {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .search-fields input,
+  .container-btn100-form-btn {
+    width: 100% !important;
+    flex: 1 1 auto !important;
+  }
+}
+
+.message-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.tab-button {
+  padding: 8px 16px;
+  background: #f1f1f1;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.tab-button.active {
+  background: #999999;
+  color: white;
+}
+
+.message-list-simple {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.message-item {
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+}
+
+.message-item.unread {
+  border-left: 4px solid #007bff;
+  background-color: #f8f9fa;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.message-date {
+  color: #666;
+  font-size: 14px;
+}
+
+.message-sender,
+.message-recipient {
+  font-weight: bold;
+  flex-grow: 1;
+  margin: 0 10px;
+}
+
+.message-content {
+  margin: 10px 0;
+  line-height: 1.5;
+}
+
+.message-scope {
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
+}
+
+.mark-as-read-btn {
+  padding: 5px 10px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.mark-as-read-btn:hover {
+  background: #218838;
+}
+
+.no-messages {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  border: 1px dashed #ddd;
+  border-radius: 4px;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.new-message-btn {
+  padding: 10px 20px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.back-btn {
+  padding: 10px 20px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.new-message-btn:hover {
+  background: #0056b3;
+}
+
+.back-btn:hover {
+  background: #5a6268;
+}
+
+.loading {
+  text-align: center;
+  padding: 50px;
+  font-size: 1.2em;
+}

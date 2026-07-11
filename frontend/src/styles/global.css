@@ -1,0 +1,18 @@
+/* global.css */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+  }
+  
+  button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  button.primary {
+    background-color: blue;
+    color: white;
+  }
+  

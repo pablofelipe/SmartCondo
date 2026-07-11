@@ -1,0 +1,27 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartCondoApi", "src\SmartCondoApi\SmartCondoApi.csproj", "{45E37CA4-EDB0-4848-B748-625A0D57B4BB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartCondoApi.Tests", "tests\SmartCondoApi.Tests\SmartCondoApi.Tests.csproj", "{216A17A0-C27D-4BF9-BD3B-3AE7D43A4231}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{45E37CA4-EDB0-4848-B748-625A0D57B4BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{45E37CA4-EDB0-4848-B748-625A0D57B4BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{45E37CA4-EDB0-4848-B748-625A0D57B4BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{45E37CA4-EDB0-4848-B748-625A0D57B4BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{216A17A0-C27D-4BF9-BD3B-3AE7D43A4231}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{216A17A0-C27D-4BF9-BD3B-3AE7D43A4231}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{216A17A0-C27D-4BF9-BD3B-3AE7D43A4231}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{216A17A0-C27D-4BF9-BD3B-3AE7D43A4231}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
