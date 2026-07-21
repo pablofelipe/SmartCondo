@@ -1,13 +1,15 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SmartCondoApi.Dto;
 using SmartCondoApi.Exceptions;
+using SmartCondoApi.Infra;
 using SmartCondoApi.Models;
+using SmartCondoApi.Models.Permissions;
 
 namespace SmartCondoApi.Services.Condominium
 {
     public class TowerService(SmartCondoContext _context) : ITowerService
     {
-        public async Task<TowerResponseDTO> Get(int id)
+        public async Task<TowerResponseDTO> Get(int id, AuthenticatedActor actor)
         {
             var tower = await _context.Towers
                 .Include(t => t.Condominium)
@@ -18,16 +20,20 @@ namespace SmartCondoApi.Services.Condominium
                 throw new TowerNotFoundException($"Torre com ID {id} não encontrada");
             }
 
+            await EnsureAuthorizedAsync(actor, tower.CondominiumId, p => p.CanViewCondominiums, "view");
+
             return MapToDto(tower);
         }
 
-        public async Task<List<TowerResponseDTO>> GetByCondominium(int condominiumId)
+        public async Task<List<TowerResponseDTO>> GetByCondominium(int condominiumId, AuthenticatedActor actor)
         {
             var condominium = await _context.Condominiums.FindAsync(condominiumId);
             if (condominium == null)
             {
                 throw new CondominiumNotFoundException($"Condomínio com ID {condominiumId} não encontrado");
             }
+
+            await EnsureAuthorizedAsync(actor, condominiumId, p => p.CanViewCondominiums, "view towers in");
 
             var towers = await _context.Towers
                 .Where(t => t.CondominiumId == condominiumId)
@@ -36,7 +42,7 @@ namespace SmartCondoApi.Services.Condominium
             return towers.Select(MapToDto).ToList();
         }
 
-        public async Task<TowerResponseDTO> Create(TowerCreateDTO towerDto)
+        public async Task<TowerResponseDTO> Create(TowerCreateDTO towerDto, AuthenticatedActor actor)
         {
             if (string.IsNullOrEmpty(towerDto.Name))
             {
@@ -54,6 +60,8 @@ namespace SmartCondoApi.Services.Condominium
                 throw new CondominiumNotFoundException($"Condomínio com ID {towerDto.CondominiumId} não encontrado");
             }
 
+            await EnsureAuthorizedAsync(actor, towerDto.CondominiumId, p => p.CanEditCondominiums, "register a tower in");
+
             var tower = new Tower
             {
                 Number = towerDto.Number,
@@ -68,13 +76,15 @@ namespace SmartCondoApi.Services.Condominium
             return MapToDto(tower);
         }
 
-        public async Task Update(int id, TowerUpdateDTO towerDto)
+        public async Task Update(int id, TowerUpdateDTO towerDto, AuthenticatedActor actor)
         {
             var tower = await _context.Towers.FindAsync(id);
             if (tower == null)
             {
                 throw new TowerNotFoundException($"Torre com ID {id} não encontrada");
             }
+
+            await EnsureAuthorizedAsync(actor, tower.CondominiumId, p => p.CanEditCondominiums, "edit");
 
             if (towerDto.Number.HasValue)
             {
@@ -99,13 +109,15 @@ namespace SmartCondoApi.Services.Condominium
             await _context.SaveChangesAsync();
         }
 
-        public async Task Delete(int id)
+        public async Task Delete(int id, AuthenticatedActor actor)
         {
             var tower = await _context.Towers.FindAsync(id);
             if (tower == null)
             {
                 throw new TowerNotFoundException($"Torre com ID {id} não encontrada");
             }
+
+            await EnsureAuthorizedAsync(actor, tower.CondominiumId, p => p.CanEditCondominiums, "delete");
 
             // Verifica se existem usuários associados a esta torre
             var hasUsers = await _context.UserProfiles.AnyAsync(u => u.TowerId == id);
@@ -116,6 +128,16 @@ namespace SmartCondoApi.Services.Condominium
 
             _context.Towers.Remove(tower);
             await _context.SaveChangesAsync();
+        }
+
+        private async Task EnsureAuthorizedAsync(AuthenticatedActor actor, int resourceCondominiumId, Func<UserPermissionsDTO, bool> hasCapability, string action)
+        {
+            var actorTenantId = await _context.GetActorCondominiumIdAsync(actor.Id);
+
+            if (!ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, resourceCondominiumId, hasCapability))
+            {
+                throw new UnauthorizedAccessException($"You are not authorized to {action} this tower's condominium");
+            }
         }
 
         private static TowerResponseDTO MapToDto(Tower tower)

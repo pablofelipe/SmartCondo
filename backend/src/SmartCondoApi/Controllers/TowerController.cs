@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SmartCondoApi.Dto;
 using SmartCondoApi.Exceptions;
-using SmartCondoApi.Models;
+using SmartCondoApi.Infra;
 using SmartCondoApi.Services.Condominium;
 
 namespace SmartCondoApi.Controllers
@@ -19,12 +18,17 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var tower = await _towerService.Get(id);
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var tower = await _towerService.Get(id, actor);
                 return Ok(tower);
             }
             catch (TowerNotFoundException ex)
             {
                 return NotFound(new { ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbidden(ex);
             }
             catch (Exception ex)
             {
@@ -38,12 +42,17 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var towers = await _towerService.GetByCondominium(condominiumId);
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var towers = await _towerService.GetByCondominium(condominiumId, actor);
                 return Ok(towers);
             }
             catch (CondominiumNotFoundException ex)
             {
                 return NotFound(new { ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbidden(ex);
             }
             catch (Exception ex)
             {
@@ -57,7 +66,8 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var tower = await _towerService.Create(towerDto);
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var tower = await _towerService.Create(towerDto, actor);
                 return CreatedAtAction(nameof(Get), new { id = tower.Id }, tower);
             }
             catch (InconsistentDataException ex)
@@ -67,6 +77,10 @@ namespace SmartCondoApi.Controllers
             catch (CondominiumNotFoundException ex)
             {
                 return NotFound(new { ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbidden(ex);
             }
             catch (Exception ex)
             {
@@ -80,7 +94,8 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                await _towerService.Update(id, towerDto);
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                await _towerService.Update(id, towerDto, actor);
                 return NoContent();
             }
             catch (TowerNotFoundException ex)
@@ -90,6 +105,10 @@ namespace SmartCondoApi.Controllers
             catch (InconsistentDataException ex)
             {
                 return BadRequest(new { ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbidden(ex);
             }
             catch (Exception ex)
             {
@@ -103,17 +122,39 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                await _towerService.Delete(id);
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                await _towerService.Delete(id, actor);
                 return NoContent();
             }
             catch (TowerNotFoundException ex)
             {
                 return NotFound(new { ex.Message });
             }
+            catch (InconsistentDataException ex)
+            {
+                return BadRequest(new { ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbidden(ex);
+            }
             catch (Exception ex)
             {
                 return StatusCode(500, new { ex.Message });
             }
+        }
+
+        private static ObjectResult Forbidden(UnauthorizedAccessException ex)
+        {
+            return new ObjectResult(new ProblemDetails
+            {
+                Title = "Forbidden",
+                Detail = ex.Message,
+                Status = StatusCodes.Status403Forbidden
+            })
+            {
+                StatusCode = StatusCodes.Status403Forbidden
+            };
         }
     }
 }
