@@ -57,7 +57,7 @@ namespace SmartCondoApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Erro inesperado no login.");
-                return StatusCode(500, new { ex.Message });
+                return StatusCode(500, new { error = "An unexpected error occurred" });
             }
         }
 
@@ -74,11 +74,10 @@ namespace SmartCondoApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Erro ao gerar chave pública. Mensagem: {ex.Message}");
+                _logger.LogError(ex, "Erro ao gerar chave pública.");
                 return StatusCode(500, new
                 {
-                    Message = "Erro interno ao processar chave",
-                    Detail = ex.Message
+                    Message = "Erro interno ao processar chave"
                 });
             }
         }

@@ -10,7 +10,7 @@ namespace SmartCondoApi.Controllers
     [ApiController]
     [Route("api/v{version:apiVersion}/[controller]")]
     [Authorize]
-    public class CondominiumController(ICondominiumService _condominiumService) : ControllerBase
+    public class CondominiumController(ICondominiumService _condominiumService, ILogger<CondominiumController> _logger) : ControllerBase
     {
         [HttpGet]
         [Authorize]
@@ -42,7 +42,8 @@ namespace SmartCondoApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { ex.Message });
+                _logger.LogError(ex, "Unhandled exception in {Controller}", nameof(CondominiumController));
+                return StatusCode(500, new { error = "An unexpected error occurred" });
             }
         }
 
@@ -65,7 +66,8 @@ namespace SmartCondoApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { ex.Message });
+                _logger.LogError(ex, "Unhandled exception in {Controller}", nameof(CondominiumController));
+                return StatusCode(500, new { error = "An unexpected error occurred" });
             }
         }
 
@@ -85,7 +87,8 @@ namespace SmartCondoApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { ex.Message });
+                _logger.LogError(ex, "Unhandled exception in {Controller}", nameof(CondominiumController));
+                return StatusCode(500, new { error = "An unexpected error occurred" });
             }
         }
 
@@ -109,7 +112,8 @@ namespace SmartCondoApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { ex.Message });
+                _logger.LogError(ex, "Unhandled exception in {Controller}", nameof(CondominiumController));
+                return StatusCode(500, new { error = "An unexpected error occurred" });
             }
         }
 
@@ -137,7 +141,8 @@ namespace SmartCondoApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { ex.Message });
+                _logger.LogError(ex, "Unhandled exception in {Controller}", nameof(CondominiumController));
+                return StatusCode(500, new { error = "An unexpected error occurred" });
             }
         }
 
@@ -161,7 +166,8 @@ namespace SmartCondoApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { ex.Message });
+                _logger.LogError(ex, "Unhandled exception in {Controller}", nameof(CondominiumController));
+                return StatusCode(500, new { error = "An unexpected error occurred" });
             }
         }
 

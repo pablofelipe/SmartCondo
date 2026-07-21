@@ -9,7 +9,7 @@ namespace SmartCondoApi.Controllers
 {
     [ApiController]
     [Route("api/v{version:apiVersion}/[controller]")]
-    public class TowerController(ITowerService _towerService) : ControllerBase
+    public class TowerController(ITowerService _towerService, ILogger<TowerController> _logger) : ControllerBase
     {
         //// Obter uma torre por ID
         [HttpGet("{id}")]
@@ -32,7 +32,8 @@ namespace SmartCondoApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { ex.Message });
+                _logger.LogError(ex, "Unhandled exception in {Controller}", nameof(TowerController));
+                return StatusCode(500, new { error = "An unexpected error occurred" });
             }
         }
 
@@ -56,7 +57,8 @@ namespace SmartCondoApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { ex.Message });
+                _logger.LogError(ex, "Unhandled exception in {Controller}", nameof(TowerController));
+                return StatusCode(500, new { error = "An unexpected error occurred" });
             }
         }
 
@@ -84,7 +86,8 @@ namespace SmartCondoApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { ex.Message });
+                _logger.LogError(ex, "Unhandled exception in {Controller}", nameof(TowerController));
+                return StatusCode(500, new { error = "An unexpected error occurred" });
             }
         }
 
@@ -112,7 +115,8 @@ namespace SmartCondoApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { ex.Message });
+                _logger.LogError(ex, "Unhandled exception in {Controller}", nameof(TowerController));
+                return StatusCode(500, new { error = "An unexpected error occurred" });
             }
         }
 
@@ -140,7 +144,8 @@ namespace SmartCondoApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { ex.Message });
+                _logger.LogError(ex, "Unhandled exception in {Controller}", nameof(TowerController));
+                return StatusCode(500, new { error = "An unexpected error occurred" });
             }
         }
 

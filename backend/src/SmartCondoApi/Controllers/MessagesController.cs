@@ -44,7 +44,8 @@ namespace SmartCondoApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Ocorreu um erro interno. Mensagem: {ex.Message}" });
+                _logger.LogError(ex, "Unhandled exception in {Controller}", nameof(MessagesController));
+                return StatusCode(500, new { error = "An unexpected error occurred" });
             }
         }
 

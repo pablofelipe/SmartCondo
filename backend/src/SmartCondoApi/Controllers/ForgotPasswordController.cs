@@ -8,7 +8,7 @@ namespace SmartCondoApi.Controllers
 {
     [ApiController]
     [Route("api/v{version:apiVersion}/[controller]")]
-    public class ForgotPasswordController(IForgotPasswordService _forgotPasswordService, IConfiguration configuration, IEmailService _emailService) : ControllerBase
+    public class ForgotPasswordController(IForgotPasswordService _forgotPasswordService, IConfiguration configuration, IEmailService _emailService, ILogger<ForgotPasswordController> _logger) : ControllerBase
     {
         [HttpPost("forgot-password")]
         public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto request)
@@ -35,7 +35,8 @@ namespace SmartCondoApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Ocorreu um erro interno. Mensagem: {ex.Message}" });
+                _logger.LogError(ex, "Unhandled exception in {Controller}", nameof(ForgotPasswordController));
+                return StatusCode(500, new { message = "An unexpected error occurred" });
             }
         }
 
@@ -53,7 +54,8 @@ namespace SmartCondoApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Ocorreu um erro interno. Mensagem: {ex.Message}" });
+                _logger.LogError(ex, "Unhandled exception in {Controller}", nameof(ForgotPasswordController));
+                return StatusCode(500, new { message = "An unexpected error occurred" });
             }
         }
     }
