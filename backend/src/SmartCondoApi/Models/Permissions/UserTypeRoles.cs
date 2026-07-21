@@ -4,10 +4,10 @@
     {
         public static readonly string[] SystemAdmins = { "SystemAdministrator" };
         public static readonly string[] CondoAdmins = { "CondominiumAdministrator", "ResidentCommitteeMember" };
-        public static readonly string[] Employees = { "Janitor", "Doorman", "Cleaner", "Security", "CleaningManager", "ITSupport" };
-        public static readonly string[] ServiceProviders = { "ServiceProvider", "ExternalProvider", "DeliveryPerson", "Supplier" };
+        public static readonly string[] Employees = { "Janitor", "Doorman", "Cleaner", "Security", "CleaningManager" };
+        public static readonly string[] ServiceProviders = { "ServiceProvider", "ExternalProvider", "DeliveryPerson" };
         public static readonly string[] Residents = { "Resident" };
-        public static readonly string[] ExternalEntities = { "Auditor", "Visitor", "FireDepartment" };
+        public static readonly string[] ExternalEntities = { "Visitor" };
 
         public static bool IsSystemAdmin(string userType) => SystemAdmins.Contains(userType);
         public static bool IsCondoAdmin(string userType) => CondoAdmins.Contains(userType);
