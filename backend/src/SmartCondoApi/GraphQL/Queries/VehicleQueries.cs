@@ -1,4 +1,6 @@
-﻿using SmartCondoApi.GraphQL.Inputs;
+using Microsoft.AspNetCore.Http;
+using SmartCondoApi.GraphQL.Inputs;
+using SmartCondoApi.Infra;
 using SmartCondoApi.Models;
 using SmartCondoApi.Services.Vehicle;
 
@@ -13,11 +15,20 @@ namespace SmartCondoApi.GraphQL.Queries
         //[UseSorting]
         public async Task<IEnumerable<Vehicle>> GetVehicles(
             [Service] IVehicleService vehicleService,
+            [Service] IHttpContextAccessor httpContextAccessor,
             [GraphQLType(typeof(VehicleFilterInputType))] VehicleFilterInput? filter = null)
         {
             try
             {
-                return await vehicleService.GetFilteredVehiclesAsync(filter ?? new VehicleFilterInput());
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(httpContextAccessor.HttpContext!.User);
+                return await vehicleService.GetFilteredVehiclesAsync(filter ?? new VehicleFilterInput(), actor);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                throw new GraphQLException(new ErrorBuilder()
+                    .SetMessage(ex.Message)
+                    .SetCode("FORBIDDEN")
+                    .Build());
             }
             catch (Exception ex)
             {
@@ -30,6 +41,7 @@ namespace SmartCondoApi.GraphQL.Queries
 
         public async Task<Vehicle> GetVehicle(
             [Service] IVehicleService vehicleService,
+            [Service] IHttpContextAccessor httpContextAccessor,
             [ID] string id)
         {
             try
@@ -39,11 +51,19 @@ namespace SmartCondoApi.GraphQL.Queries
                     throw new GraphQLException("VehicleID deve ser numérico");
                 }
 
-                var vehicle = await vehicleService.GetVehicleByIdAsync(idInt);
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(httpContextAccessor.HttpContext!.User);
+                var vehicle = await vehicleService.GetVehicleByIdAsync(idInt, actor);
                 return vehicle ?? throw new GraphQLException(new ErrorBuilder()
                     .SetMessage("Veículo não encontrado")
                     .SetCode("VEHICLE_NOT_FOUND")
                     .SetExtension("id", id)
+                    .Build());
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                throw new GraphQLException(new ErrorBuilder()
+                    .SetMessage(ex.Message)
+                    .SetCode("FORBIDDEN")
                     .Build());
             }
             catch (Exception ex)

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SmartCondoApi.Models;
+using SmartCondoApi.Models.Permissions;
 using SmartCondoApi.GraphQL.Inputs;
 using SmartCondoApi.Exceptions;
 
@@ -7,25 +8,45 @@ namespace SmartCondoApi.Services.Vehicle
 {
     public class VehicleService(SmartCondoContext _context) : IVehicleService
     {
-        public async Task<Models.Vehicle> CreateVehicleAsync(Models.Vehicle vehicle)
+        public async Task<Models.Vehicle> CreateVehicleAsync(Models.Vehicle vehicle, AuthenticatedActor actor)
         {
+            if (!ResourceAuthorization.IsAuthorized(actor, vehicle.UserId, p => p.CanRegisterVehicles))
+            {
+                throw new UnauthorizedAccessException("You are not authorized to register this vehicle");
+            }
+
             _context.Vehicles.Add(vehicle);
             await _context.SaveChangesAsync();
             return vehicle;
         }
 
-        public async Task DeleteVehicleAsync(int id)
+        public async Task<bool> DeleteVehicleAsync(int id, AuthenticatedActor actor)
         {
-            var vehicle = await GetVehicleByIdAsync(id);
-            if (vehicle != null)
+            var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.Id == id);
+            if (vehicle == null)
             {
-                _context.Vehicles.Remove(vehicle);
-                await _context.SaveChangesAsync();
+                return false;
             }
+
+            if (!ResourceAuthorization.IsAuthorized(actor, vehicle.UserId, p => p.CanEditVehicles))
+            {
+                throw new UnauthorizedAccessException("You are not authorized to delete this vehicle");
+            }
+
+            _context.Vehicles.Remove(vehicle);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
-        public async Task<IEnumerable<Models.Vehicle>> GetFilteredVehiclesAsync(VehicleFilterInput filter)
+        public async Task<IEnumerable<Models.Vehicle>> GetFilteredVehiclesAsync(VehicleFilterInput filter, AuthenticatedActor actor)
         {
+            var hasViewCapability = RolePermissions.GetPermissions().TryGetValue(actor.Role, out var permissions) && permissions.CanViewVehicles;
+
+            if (!hasViewCapability)
+            {
+                return await _context.Vehicles.Where(v => v.UserId == actor.Id).ToListAsync();
+            }
+
             if (string.IsNullOrEmpty(filter.LicensePlate)
                 && string.IsNullOrEmpty(filter.Model)
                 && string.IsNullOrEmpty(filter.OwnerName)
@@ -71,15 +92,47 @@ namespace SmartCondoApi.Services.Vehicle
             return await query.ToListAsync();
         }
 
-        public async Task<Models.Vehicle> GetVehicleByIdAsync(int id)
+        public async Task<Models.Vehicle> GetVehicleByIdAsync(int id, AuthenticatedActor actor)
         {
-            return await _context.Vehicles
+            var vehicle = await _context.Vehicles
                 .Include(v => v.User)
                 .FirstOrDefaultAsync(v => v.Id == id);
+
+            if (vehicle == null)
+            {
+                return null;
+            }
+
+            if (!ResourceAuthorization.IsAuthorized(actor, vehicle.UserId, p => p.CanViewVehicles))
+            {
+                throw new UnauthorizedAccessException("You are not authorized to view this vehicle");
+            }
+
+            return vehicle;
         }
 
-        public async Task<Models.Vehicle> UpdateVehicleAsync(Models.Vehicle vehicle)
+        public async Task<Models.Vehicle> UpdateVehicleAsync(Models.Vehicle vehicle, AuthenticatedActor actor)
         {
+            var existing = await _context.Vehicles.AsNoTracking().FirstOrDefaultAsync(v => v.Id == vehicle.Id);
+            if (existing == null)
+            {
+                return null;
+            }
+
+            var isSelf = actor.Id == existing.UserId;
+            var hasEditCapability = RolePermissions.GetPermissions().TryGetValue(actor.Role, out var permissions) && permissions.CanEditVehicles;
+
+            if (!isSelf && !hasEditCapability)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to edit this vehicle");
+            }
+
+            if (!hasEditCapability)
+            {
+                // Self-service can edit its own vehicle, but never reassign it to someone else.
+                vehicle.UserId = existing.UserId;
+            }
+
             _context.Vehicles.Update(vehicle);
             await _context.SaveChangesAsync();
             return vehicle;

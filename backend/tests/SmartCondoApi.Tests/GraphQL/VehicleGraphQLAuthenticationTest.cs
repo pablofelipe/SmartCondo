@@ -36,6 +36,7 @@ namespace SmartCondoApi.Tests.GraphQL
                             options.UseInMemoryDatabase($"graphQLAuthTest_{Guid.NewGuid()}"));
                         services.AddScoped<IVehicleService, VehicleService>();
                         services.AddRouting();
+                        services.AddHttpContextAccessor();
 
                         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                             .AddJwtBearer(options =>

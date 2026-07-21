@@ -1,4 +1,6 @@
-﻿using SmartCondoApi.GraphQL.Inputs;
+using Microsoft.AspNetCore.Http;
+using SmartCondoApi.GraphQL.Inputs;
+using SmartCondoApi.Infra;
 using SmartCondoApi.Models;
 using SmartCondoApi.Services.Vehicle;
 
@@ -9,6 +11,7 @@ namespace SmartCondoApi.GraphQL.Mutations
     {
         public async Task<Vehicle> CreateVehicle(
             [Service] IVehicleService vehicleService,
+            [Service] IHttpContextAccessor httpContextAccessor,
             VehicleInput input)
         {
             try
@@ -17,6 +20,8 @@ namespace SmartCondoApi.GraphQL.Mutations
                 {
                     throw new GraphQLException("UserID é obrigatório");
                 }
+
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(httpContextAccessor.HttpContext!.User);
 
                 var vehicle = new Vehicle
                 {
@@ -29,8 +34,15 @@ namespace SmartCondoApi.GraphQL.Mutations
                     UserId = input.UserId ?? 0
                 };
 
-                var createdVehicle = await vehicleService.CreateVehicleAsync(vehicle);
+                var createdVehicle = await vehicleService.CreateVehicleAsync(vehicle, actor);
                 return createdVehicle;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                throw new GraphQLException(new ErrorBuilder()
+                    .SetMessage(ex.Message)
+                    .SetCode("FORBIDDEN")
+                    .Build());
             }
             catch (Exception ex)
             {
@@ -44,6 +56,7 @@ namespace SmartCondoApi.GraphQL.Mutations
 
         public async Task<Vehicle> UpdateVehicle(
             [Service] IVehicleService vehicleService,
+            [Service] IHttpContextAccessor httpContextAccessor,
             [ID] string id,
             VehicleInput input)
         {
@@ -59,8 +72,23 @@ namespace SmartCondoApi.GraphQL.Mutations
                     throw new GraphQLException("UserID é obrigatório");
                 }
 
-                var vehicle = await vehicleService.GetVehicleByIdAsync(idInt);
-                if (vehicle == null)
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(httpContextAccessor.HttpContext!.User);
+
+                var vehicle = new Vehicle
+                {
+                    Id = idInt,
+                    Type = input.Type,
+                    LicensePlate = input.LicensePlate,
+                    Brand = input.Brand,
+                    Model = input.Model,
+                    Color = input.Color,
+                    Enabled = input.Enabled,
+                    UserId = input.UserId ?? 0
+                };
+
+                var updatedVehicle = await vehicleService.UpdateVehicleAsync(vehicle, actor);
+
+                if (updatedVehicle == null)
                 {
                     throw new GraphQLException(new ErrorBuilder()
                         .SetMessage("Veículo não encontrado")
@@ -69,16 +97,14 @@ namespace SmartCondoApi.GraphQL.Mutations
                         .Build());
                 }
 
-                vehicle.Type = input.Type;
-                vehicle.LicensePlate = input.LicensePlate;
-                vehicle.Brand = input.Brand;
-                vehicle.Model = input.Model;
-                vehicle.Color = input.Color;
-                vehicle.Enabled = input.Enabled;
-                vehicle.UserId = input.UserId ?? 0;
-
-                var updatedVehicle = await vehicleService.UpdateVehicleAsync(vehicle);
                 return updatedVehicle;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                throw new GraphQLException(new ErrorBuilder()
+                    .SetMessage(ex.Message)
+                    .SetCode("FORBIDDEN")
+                    .Build());
             }
             catch (Exception ex)
             {
@@ -92,6 +118,7 @@ namespace SmartCondoApi.GraphQL.Mutations
 
         public async Task<bool> DeleteVehicle(
             [Service] IVehicleService vehicleService,
+            [Service] IHttpContextAccessor httpContextAccessor,
             [ID] string id)
         {
             try
@@ -101,8 +128,10 @@ namespace SmartCondoApi.GraphQL.Mutations
                     throw new GraphQLException("VehicleID deve ser numérico");
                 }
 
-                var vehicle = await vehicleService.GetVehicleByIdAsync(idInt);
-                if (vehicle == null)
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(httpContextAccessor.HttpContext!.User);
+                var deleted = await vehicleService.DeleteVehicleAsync(idInt, actor);
+
+                if (!deleted)
                 {
                     throw new GraphQLException(new ErrorBuilder()
                         .SetMessage("Veículo não encontrado")
@@ -111,8 +140,14 @@ namespace SmartCondoApi.GraphQL.Mutations
                         .Build());
                 }
 
-                await vehicleService.DeleteVehicleAsync(idInt);
                 return true;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                throw new GraphQLException(new ErrorBuilder()
+                    .SetMessage(ex.Message)
+                    .SetCode("FORBIDDEN")
+                    .Build());
             }
             catch (Exception ex)
             {
