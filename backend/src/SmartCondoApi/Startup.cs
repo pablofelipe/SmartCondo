@@ -1,10 +1,12 @@
 ﻿using Amazon.ApiGatewayManagementApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SmartCondoApi.Controllers;
@@ -211,6 +213,9 @@ public class Startup
                 | HttpLoggingFields.Duration;
         });
 
+        services.AddHealthChecks()
+            .AddCheck<DatabaseHealthCheck>("database", tags: ["ready"]);
+
         services.AddGraphQLServer()
             .AddQueryType<Query>()
             .AddMutationType<Mutation>()
@@ -301,6 +306,19 @@ public class Startup
         {
             endpoints.MapControllers();
             GraphQL.GraphQLEndpoints.Map(endpoints);
+
+            // Liveness: is the process itself up? No dependency checks - a DB outage shouldn't make an
+            // orchestrator kill and restart an otherwise-healthy instance.
+            endpoints.MapHealthChecks("/health/live", new HealthCheckOptions
+            {
+                Predicate = _ => false
+            });
+
+            // Readiness: can this instance actually serve traffic right now?
+            endpoints.MapHealthChecks("/health/ready", new HealthCheckOptions
+            {
+                Predicate = check => check.Tags.Contains("ready")
+            });
         });
 
     }
