@@ -72,11 +72,6 @@ namespace SmartCondoApi.Controllers
             await context.Database.MigrateAsync();
             _logger.LogInformation("Migrations aplicadas com sucesso");
 
-            // Executa os seeds de permissões
-            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<long>>>();
-            await SmartCondoContext.SeedPermissionsAsync(roleManager);
-            _logger.LogInformation("Permissões configuradas");
-
             // Seed do admin
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
             var adminEmail = _configuration["ADMIN_EMAIL"] ?? throw new ArgumentNullException("ADMIN_EMAIL not configured");
@@ -111,7 +106,6 @@ namespace SmartCondoApi.Controllers
 
                 if (result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(adminUser, "SystemAdministrator");
                     _logger.LogInformation("Usuário admin criado com sucesso");
                 }
                 else

@@ -1,9 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using SmartCondoApi.Dto;
-using SmartCondoApi.Models.Permissions;
-using System.Security.Claims;
 
 namespace SmartCondoApi.Models
 {
@@ -158,49 +155,6 @@ namespace SmartCondoApi.Models
             });
 
             base.OnModelCreating(modelBuilder);
-        }
-
-        public static async Task SeedPermissionsAsync(RoleManager<IdentityRole<long>> roleManager)
-        {
-            var rolePermissions = RolePermissions.GetPermissions();
-
-            foreach (var rolePermission in rolePermissions)
-            {
-                await CreateOrUpdateRoleAsync(roleManager, rolePermission.Key, rolePermission.Value);
-            }
-        }
-
-        private static async Task CreateOrUpdateRoleAsync(RoleManager<IdentityRole<long>> roleManager,
-            string roleName, UserPermissionsDTO permission)
-        {
-            var role = await roleManager.FindByNameAsync(roleName);
-            if (role == null)
-            {
-                role = new IdentityRole<long>(roleName);
-                await roleManager.CreateAsync(role);
-            }
-
-            var existingClaims = await roleManager.GetClaimsAsync(role);
-            foreach (var claim in existingClaims)
-            {
-                await roleManager.RemoveClaimAsync(role, claim);
-            }
-
-            foreach (var property in permission.GetType().GetProperties())
-            {
-                var value = property.GetValue(permission);
-
-                if (value != null && bool.TryParse(value.ToString(), out bool bValue) && bValue)
-                    await roleManager.AddClaimAsync(role, new Claim("Permission", property.Name));
-            }
-
-            if (null != permission.AllowedRecipientTypes)
-            {
-                foreach (var allowedType in permission.AllowedRecipientTypes)
-                {
-                    await roleManager.AddClaimAsync(role, new Claim("AllowedRecipient", allowedType));
-                }
-            }
         }
     }
 }

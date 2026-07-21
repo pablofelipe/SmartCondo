@@ -19,7 +19,6 @@ using SmartCondoApi.Services.ForgotPassword;
 using SmartCondoApi.Services.LinkGenerator;
 using SmartCondoApi.Services.Message;
 using SmartCondoApi.Services.Notification;
-using SmartCondoApi.Services.Permissions;
 using SmartCondoApi.Services.User;
 using SmartCondoApi.Services.Vehicle;
 
@@ -137,7 +136,6 @@ public class Startup
         services.AddScoped<ITowerService, TowerService>();
         services.AddScoped<ICondominiumService, CondominiumService>();
         services.AddScoped<ICryptoService, CryptoService>();
-        services.AddScoped<IPermissionService, PermissionService>();
         services.AddScoped<IMessageService, MessageService>();
         services.AddScoped<IVehicleService, VehicleService>();
 
