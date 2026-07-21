@@ -18,7 +18,7 @@ namespace SmartCondoApi.GraphQL.Mutations
             {
                 if (!input.UserId.HasValue || input.UserId.Value == 0)
                 {
-                    throw new GraphQLException("UserID é obrigatório");
+                    throw new GraphQLException("UserID is required");
                 }
 
                 var actor = AuthenticatedActorFactory.FromClaimsPrincipal(httpContextAccessor.HttpContext!.User);
@@ -64,12 +64,12 @@ namespace SmartCondoApi.GraphQL.Mutations
             {
                 if (!int.TryParse(id, out var idInt))
                 {
-                    throw new GraphQLException("VehicleID deve ser numérico");
+                    throw new GraphQLException("VehicleID must be numeric");
                 }
 
                 if (!input.UserId.HasValue || input.UserId.Value == 0)
                 {
-                    throw new GraphQLException("UserID é obrigatório");
+                    throw new GraphQLException("UserID is required");
                 }
 
                 var actor = AuthenticatedActorFactory.FromClaimsPrincipal(httpContextAccessor.HttpContext!.User);
@@ -91,7 +91,7 @@ namespace SmartCondoApi.GraphQL.Mutations
                 if (updatedVehicle == null)
                 {
                     throw new GraphQLException(new ErrorBuilder()
-                        .SetMessage("Veículo não encontrado")
+                        .SetMessage("Vehicle not found")
                         .SetCode("VEHICLE_NOT_FOUND")
                         .SetExtension("id", id)
                         .Build());
@@ -125,7 +125,7 @@ namespace SmartCondoApi.GraphQL.Mutations
             {
                 if (!int.TryParse(id, out var idInt))
                 {
-                    throw new GraphQLException("VehicleID deve ser numérico");
+                    throw new GraphQLException("VehicleID must be numeric");
                 }
 
                 var actor = AuthenticatedActorFactory.FromClaimsPrincipal(httpContextAccessor.HttpContext!.User);
@@ -134,7 +134,7 @@ namespace SmartCondoApi.GraphQL.Mutations
                 if (!deleted)
                 {
                     throw new GraphQLException(new ErrorBuilder()
-                        .SetMessage("Veículo não encontrado")
+                        .SetMessage("Vehicle not found")
                         .SetCode("VEHICLE_NOT_FOUND")
                         .SetExtension("id", id)
                         .Build());

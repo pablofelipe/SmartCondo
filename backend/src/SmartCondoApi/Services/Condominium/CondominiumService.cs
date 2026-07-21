@@ -37,7 +37,7 @@ namespace SmartCondoApi.Services.Condominium
 
             if (condo == null)
             {
-                throw new CondominiumNotFoundException($"Condomínio com ID {condominiumId} não encontrado");
+                throw new CondominiumNotFoundException($"Condominium with ID {condominiumId} not found");
             }
 
             await EnsureAuthorizedAsync(actor, condo.Id, p => p.CanViewCondominiums, "view");
@@ -49,12 +49,12 @@ namespace SmartCondoApi.Services.Condominium
         {
             if (condominiumId < 1)
             {
-                throw new InconsistentDataException($"Numero do condominio {condominiumId} incorreto.");
+                throw new InconsistentDataException($"Invalid condominium number {condominiumId}.");
             }
 
             if (string.IsNullOrEmpty(searchDto.Name) && string.IsNullOrEmpty(searchDto.RegistrationNumber))
             {
-                throw new InconsistentDataException("Nome ou CPF/CNPJ devem ser informados");
+                throw new InconsistentDataException("Name or CPF/CNPJ must be provided");
             }
 
             await EnsureAuthorizedAsync(actor, condominiumId, p => p.CanViewUsers, "search users in");
@@ -96,7 +96,7 @@ namespace SmartCondoApi.Services.Condominium
         {
             if (string.IsNullOrEmpty(searchDto.Name))
             {
-                throw new InconsistentDataException("O nome deve ser informado para busca");
+                throw new InconsistentDataException("The name must be provided to search");
             }
 
             if (!RolePermissions.GetPermissions().TryGetValue(actor.Role, out var permissions) || !permissions.CanViewCondominiums)
@@ -126,17 +126,17 @@ namespace SmartCondoApi.Services.Condominium
 
             if (string.IsNullOrEmpty(condoDto.Name))
             {
-                throw new InconsistentDataException("O nome do condomínio é obrigatório");
+                throw new InconsistentDataException("The condominium name is required");
             }
 
             if (condoDto.TowerCount < 0)
             {
-                throw new InconsistentDataException("O número de torres não pode ser negativo");
+                throw new InconsistentDataException("The tower count cannot be negative");
             }
 
             if (condoDto.MaxUsers <= 0)
             {
-                throw new InconsistentDataException("O número máximo de usuários deve ser maior que zero");
+                throw new InconsistentDataException("The maximum number of users must be greater than zero");
             }
 
             var condo = new Models.Condominium
@@ -166,7 +166,7 @@ namespace SmartCondoApi.Services.Condominium
                 }
                 await _context.SaveChangesAsync();
 
-                // Atualiza o tower count com o número real de torres
+                // Update the tower count with the actual number of towers
                 condo.TowerCount = condoDto.Towers.Count;
                 _context.Condominiums.Update(condo);
                 await _context.SaveChangesAsync();
@@ -180,7 +180,7 @@ namespace SmartCondoApi.Services.Condominium
             var condo = await _context.Condominiums.FindAsync(id);
             if (condo == null)
             {
-                throw new CondominiumNotFoundException($"Condomínio com ID {id} não encontrado");
+                throw new CondominiumNotFoundException($"Condominium with ID {id} not found");
             }
 
             await EnsureAuthorizedAsync(actor, condo.Id, p => p.CanEditCondominiums, "edit");
@@ -199,7 +199,7 @@ namespace SmartCondoApi.Services.Condominium
             {
                 if (condoDto.TowerCount < 0)
                 {
-                    throw new InconsistentDataException("O número de torres não pode ser negativo");
+                    throw new InconsistentDataException("The tower count cannot be negative");
                 }
                 condo.TowerCount = condoDto.TowerCount.Value;
             }
@@ -208,7 +208,7 @@ namespace SmartCondoApi.Services.Condominium
             {
                 if (condoDto.MaxUsers <= 0)
                 {
-                    throw new InconsistentDataException("O número máximo de usuários deve ser maior que zero");
+                    throw new InconsistentDataException("The maximum number of users must be greater than zero");
                 }
                 condo.MaxUsers = condoDto.MaxUsers.Value;
             }
@@ -222,19 +222,19 @@ namespace SmartCondoApi.Services.Condominium
 
             if (condoDto.Towers != null)
             {
-                // Remove torres que não estão mais no DTO
+                // Remove towers that are no longer in the DTO
                 var towersToRemove = condo.Towers
                     .Where(t => !condoDto.Towers.Any(dto => dto.Id == t.Id))
                     .ToList();
 
                 _context.Towers.RemoveRange(towersToRemove);
 
-                // Atualiza ou adiciona novas torres
+                // Update existing towers or add new ones
                 foreach (var towerDto in condoDto.Towers)
                 {
                     if (towerDto.Id.HasValue)
                     {
-                        // Atualiza torre existente
+                        // Update the existing tower
                         var existingTower = condo.Towers.FirstOrDefault(t => t.Id == towerDto.Id);
                         if (existingTower != null)
                         {
@@ -245,7 +245,7 @@ namespace SmartCondoApi.Services.Condominium
                     }
                     else
                     {
-                        // Adiciona nova torre
+                        // Add a new tower
                         var newTower = new Tower
                         {
                             Number = towerDto.Number ?? 0,
@@ -267,16 +267,16 @@ namespace SmartCondoApi.Services.Condominium
             var condo = await _context.Condominiums.FindAsync(id);
             if (condo == null)
             {
-                throw new CondominiumNotFoundException($"Condomínio com ID {id} não encontrado");
+                throw new CondominiumNotFoundException($"Condominium with ID {id} not found");
             }
 
             await EnsureAuthorizedAsync(actor, condo.Id, p => p.CanEditCondominiums, "delete");
 
-            // Verifica se existem usuários associados a este condomínio
+            // Check whether any users are associated with this condominium
             var hasUsers = await _context.UserProfiles.AnyAsync(u => u.CondominiumId == id);
             if (hasUsers)
             {
-                // Desativa em vez de deletar se houver usuários associados
+                // Disable instead of deleting if there are associated users
                 condo.Enabled = false;
                 _context.Condominiums.Update(condo);
             }

@@ -48,13 +48,13 @@ namespace SmartCondoApi.GraphQL.Queries
             {
                 if (!int.TryParse(id, out var idInt))
                 {
-                    throw new GraphQLException("VehicleID deve ser numérico");
+                    throw new GraphQLException("VehicleID must be numeric");
                 }
 
                 var actor = AuthenticatedActorFactory.FromClaimsPrincipal(httpContextAccessor.HttpContext!.User);
                 var vehicle = await vehicleService.GetVehicleByIdAsync(idInt, actor);
                 return vehicle ?? throw new GraphQLException(new ErrorBuilder()
-                    .SetMessage("Veículo não encontrado")
+                    .SetMessage("Vehicle not found")
                     .SetCode("VEHICLE_NOT_FOUND")
                     .SetExtension("id", id)
                     .Build());

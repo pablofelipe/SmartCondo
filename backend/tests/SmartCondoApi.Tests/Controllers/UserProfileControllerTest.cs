@@ -476,7 +476,7 @@ namespace SmartCondoApi.Tests.Controllers
                 }
             };
 
-            var result = await PerformUnauthorizedAddUserTest(fakeUserCreateDTO, "O número máximo de usuários permitidos para este condomínio foi atingido");
+            var result = await PerformUnauthorizedAddUserTest(fakeUserCreateDTO, "The maximum number of users allowed for this condominium has been reached");
             Console.WriteLine("AddUserFailsWhenAConcurrentRegistrationAlreadyFilledTheCondominium: " + result.Value);
         }
 
@@ -549,7 +549,7 @@ namespace SmartCondoApi.Tests.Controllers
                 }
             };
 
-            var result = await PerformBadRequestAddUserTest(fakeUserCreateDTO, "CPF/CNPJ inválido");
+            var result = await PerformBadRequestAddUserTest(fakeUserCreateDTO, "Invalid CPF/CNPJ");
             Console.WriteLine("WrongRegistrationNumber: " + result.Value);
         }
 
@@ -573,7 +573,7 @@ namespace SmartCondoApi.Tests.Controllers
                 ParkingSpaceNumber = 10
             };
 
-            var result = await PerformBadRequestAddUserTest(fakeUserCreateDTO, "Nenhum login encontrado");
+            var result = await PerformBadRequestAddUserTest(fakeUserCreateDTO, "No login was provided");
             Console.WriteLine("WrongLogin: " + result.Value);
         }
 
@@ -602,7 +602,7 @@ namespace SmartCondoApi.Tests.Controllers
                 }
             };
 
-            var result = await PerformBadRequestAddUserTest(fakeUserCreateDTO, "Condominio 10 não encontrado");
+            var result = await PerformBadRequestAddUserTest(fakeUserCreateDTO, "Condominium 10 not found");
             Console.WriteLine("NotFoundCondominiumUserNeededIt: " + result.Value);
         }
 
@@ -660,7 +660,7 @@ namespace SmartCondoApi.Tests.Controllers
                 }
             };
 
-            var result = await PerformUnauthorizedAddUserTest(fakeUserCreateDTO, "Condomínio Condominium B desabilitado");
+            var result = await PerformUnauthorizedAddUserTest(fakeUserCreateDTO, "Condominium Condominium B is disabled");
             Console.WriteLine("CondominiumDisabled: " + result.Value);
         }
 
@@ -735,7 +735,7 @@ namespace SmartCondoApi.Tests.Controllers
                 }
             };
 
-            var result3 = await PerformUnauthorizedAddUserTest(fakeUserCreateDTO3, "O número máximo de usuários permitidos para este condomínio foi atingido");
+            var result3 = await PerformUnauthorizedAddUserTest(fakeUserCreateDTO3, "The maximum number of users allowed for this condominium has been reached");
 
             Console.WriteLine("MaxUsersByCondominium: " + result3.Value);
         }
@@ -774,7 +774,7 @@ namespace SmartCondoApi.Tests.Controllers
                 }
             };
 
-            var result1 = await PerformBadRequestAddUserTest(fakeUserCreateDTO1, "Tipo de usuário 99 não encontrado");
+            var result1 = await PerformBadRequestAddUserTest(fakeUserCreateDTO1, "User type 99 not found");
 
             Console.WriteLine("UsertTypeNotFound: " + result1.Value);
         }
@@ -804,7 +804,7 @@ namespace SmartCondoApi.Tests.Controllers
                 }
             };
 
-            var result1 = await PerformBadRequestAddUserTest(fakeUserCreateDTO1, "Número de apartamento incorreto");
+            var result1 = await PerformBadRequestAddUserTest(fakeUserCreateDTO1, "Invalid apartment number");
 
             Console.WriteLine("WrongApartment: " + result1.Value);
         }
@@ -834,7 +834,7 @@ namespace SmartCondoApi.Tests.Controllers
                 }
             };
 
-            var result1 = await PerformBadRequestAddUserTest(fakeUserCreateDTO1, "Torre 2 não encontrada");
+            var result1 = await PerformBadRequestAddUserTest(fakeUserCreateDTO1, "Tower 2 not found");
 
             Console.WriteLine("WrongTowerByNumber: " + result1.Value);
         }
@@ -864,7 +864,7 @@ namespace SmartCondoApi.Tests.Controllers
                 }
             };
 
-            var result1 = await PerformBadRequestAddUserTest(fakeUserCreateDTO1, "Número de andar incorreto. A torre Tower A1 possui 4 andar(es)");
+            var result1 = await PerformBadRequestAddUserTest(fakeUserCreateDTO1, "Invalid floor number. Tower Tower A1 has 4 floor(s)");
 
             Console.WriteLine("WrongFloorByCount: " + result1.Value);
         }
@@ -917,7 +917,7 @@ namespace SmartCondoApi.Tests.Controllers
                 }
             };
 
-            var result2 = await PerformUnauthorizedAddUserTest(fakeUserCreateDTO2, "Número de vaga especificada já está em uso para outro apartamento");
+            var result2 = await PerformUnauthorizedAddUserTest(fakeUserCreateDTO2, "The specified parking space number is already in use");
 
             Console.WriteLine("WrongParkingSpaceNumber: " + result2.Value);
         }
@@ -947,7 +947,7 @@ namespace SmartCondoApi.Tests.Controllers
                 }
             };
 
-            var result = await PerformUnauthorizedAddUserTest(fakeUserCreateDTO, "Login adminsystem@smartcondohub.com já cadastrado");
+            var result = await PerformUnauthorizedAddUserTest(fakeUserCreateDTO, "Login adminsystem@smartcondohub.com is already registered");
             Console.WriteLine("LoginAlreadyExists: " + result.Value);
         }
 
@@ -977,7 +977,7 @@ namespace SmartCondoApi.Tests.Controllers
                 }
             };
 
-            var result = await PerformUnauthorizedAddUserTest(fakeUserCreateDTO, "CPF 51983777404 já cadastrado");
+            var result = await PerformUnauthorizedAddUserTest(fakeUserCreateDTO, "CPF 51983777404 is already registered");
             Console.WriteLine("UserAlreadyExists: " + result.Value);
         }
 

@@ -63,7 +63,7 @@ namespace SmartCondoApi.Services.Vehicle
                 && string.IsNullOrEmpty(filter.RegistrationNumber)
                 && filter.ApartmentNumber == null
                && filter.ParkingSpaceNumber == null)
-                throw new NoVehicleFilterException("Nenhum parâmetro para veículo recebido");
+                throw new NoVehicleFilterException("No vehicle filter parameter was provided");
 
             var query = from vehicle in _context.Vehicles
                         join userProfile in _context.UserProfiles

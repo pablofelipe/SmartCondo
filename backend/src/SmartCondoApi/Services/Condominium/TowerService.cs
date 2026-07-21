@@ -17,7 +17,7 @@ namespace SmartCondoApi.Services.Condominium
 
             if (tower == null)
             {
-                throw new TowerNotFoundException($"Torre com ID {id} não encontrada");
+                throw new TowerNotFoundException($"Tower with ID {id} not found");
             }
 
             await EnsureAuthorizedAsync(actor, tower.CondominiumId, p => p.CanViewCondominiums, "view");
@@ -30,7 +30,7 @@ namespace SmartCondoApi.Services.Condominium
             var condominium = await _context.Condominiums.FindAsync(condominiumId);
             if (condominium == null)
             {
-                throw new CondominiumNotFoundException($"Condomínio com ID {condominiumId} não encontrado");
+                throw new CondominiumNotFoundException($"Condominium with ID {condominiumId} not found");
             }
 
             await EnsureAuthorizedAsync(actor, condominiumId, p => p.CanViewCondominiums, "view towers in");
@@ -46,18 +46,18 @@ namespace SmartCondoApi.Services.Condominium
         {
             if (string.IsNullOrEmpty(towerDto.Name))
             {
-                throw new InconsistentDataException("O nome da torre é obrigatório");
+                throw new InconsistentDataException("The tower name is required");
             }
 
             if (towerDto.FloorCount <= 0)
             {
-                throw new InconsistentDataException("O número de andares deve ser maior que zero");
+                throw new InconsistentDataException("The floor count must be greater than zero");
             }
 
             var condominium = await _context.Condominiums.FindAsync(towerDto.CondominiumId);
             if (condominium == null)
             {
-                throw new CondominiumNotFoundException($"Condomínio com ID {towerDto.CondominiumId} não encontrado");
+                throw new CondominiumNotFoundException($"Condominium with ID {towerDto.CondominiumId} not found");
             }
 
             await EnsureAuthorizedAsync(actor, towerDto.CondominiumId, p => p.CanEditCondominiums, "register a tower in");
@@ -81,7 +81,7 @@ namespace SmartCondoApi.Services.Condominium
             var tower = await _context.Towers.FindAsync(id);
             if (tower == null)
             {
-                throw new TowerNotFoundException($"Torre com ID {id} não encontrada");
+                throw new TowerNotFoundException($"Tower with ID {id} not found");
             }
 
             await EnsureAuthorizedAsync(actor, tower.CondominiumId, p => p.CanEditCondominiums, "edit");
@@ -100,7 +100,7 @@ namespace SmartCondoApi.Services.Condominium
             {
                 if (towerDto.FloorCount <= 0)
                 {
-                    throw new InconsistentDataException("O número de andares deve ser maior que zero");
+                    throw new InconsistentDataException("The floor count must be greater than zero");
                 }
                 tower.FloorCount = towerDto.FloorCount.Value;
             }
@@ -114,16 +114,16 @@ namespace SmartCondoApi.Services.Condominium
             var tower = await _context.Towers.FindAsync(id);
             if (tower == null)
             {
-                throw new TowerNotFoundException($"Torre com ID {id} não encontrada");
+                throw new TowerNotFoundException($"Tower with ID {id} not found");
             }
 
             await EnsureAuthorizedAsync(actor, tower.CondominiumId, p => p.CanEditCondominiums, "delete");
 
-            // Verifica se existem usuários associados a esta torre
+            // Check whether any users are associated with this tower
             var hasUsers = await _context.UserProfiles.AnyAsync(u => u.TowerId == id);
             if (hasUsers)
             {
-                throw new InconsistentDataException("Não é possível deletar uma torre com usuários associados");
+                throw new InconsistentDataException("Cannot delete a tower with associated users");
             }
 
             _context.Towers.Remove(tower);

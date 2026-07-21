@@ -26,7 +26,7 @@ namespace SmartCondoApi.Models
         {
             if (OccupiedUserSlots >= MaxUsers)
             {
-                throw new UsersExceedException("O número máximo de usuários permitidos para este condomínio foi atingido. Entre em contato com o administrador para mais informações.");
+                throw new UsersExceedException("The maximum number of users allowed for this condominium has been reached. Contact the administrator for more information.");
             }
 
             OccupiedUserSlots += 1;

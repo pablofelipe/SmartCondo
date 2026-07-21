@@ -20,28 +20,28 @@ namespace SmartCondoApi.Services.Message
                 .FirstOrDefaultAsync(u => u.Id == senderId);
 
             if (sender == null)
-                throw new ArgumentException("Usuário não encontrado");
+                throw new ArgumentException("User not found");
 
             var userType = await _context.UserTypes.FirstOrDefaultAsync(ut => ut.Id == sender.UserTypeId);
 
             if (userType == null)
-                throw new ArgumentException("Tipo de usuário não encontrado");
+                throw new ArgumentException("User type not found");
 
             var hasUnrestrictedScope = _permissions.TryGetValue(userType.Name, out var permissions) && permissions.CanManageAllCondominiums;
 
             if (sender.CondominiumId == null && !hasUnrestrictedScope)
-                throw new InvalidOperationException("Usuário não está associado ao condomínio");
+                throw new InvalidOperationException("User is not associated with a condominium");
 
             return sender;
         }
 
         private static int ResolveCondominiumId(MessageCreateDto dto, UserProfile sender)
         {
-            // Mensagem individual pode herdar do remetente
+            // An individual message can inherit the sender's condominium
             if (dto.Scope == MessageScope.Individual)
                 return sender.CondominiumId ?? throw new InvalidOperationException("Sender has no Condominium");
 
-            // Mensagem para grupo requer condomínio explícito ou do remetente
+            // A group message requires an explicit condominium or the sender's own
             return dto.CondominiumId ?? sender.CondominiumId
                 ?? throw new InvalidOperationException("CondominiumId must be specified for group messages");
         }
@@ -56,24 +56,24 @@ namespace SmartCondoApi.Services.Message
                 throw new ArgumentException("Sender not found");
             }
 
-            // Verificar se o tipo de usuário do remetente existe nas permissões
+            // Check whether the sender's user type has permissions configured
             if (!_permissions.TryGetValue(sender.UserType.Name, out var senderPermissions))
             {
                 _logger.LogWarning("No permissions configured for user type {UserType}", sender.UserType.Name);
                 throw new UnauthorizedAccessException("Your user type is not authorized to send messages");
             }
 
-            // Validar permissões do remetente
+            // Validate the sender's permissions
             if (!ValidateSenderPermissions(sender, messageDto, senderPermissions))
             {
                 _logger.LogWarning("Permission denied for sender {SenderId} to send message of type {Scope}", actor.Id, messageDto.Scope);
                 throw new UnauthorizedAccessException("You don't have permission to send this message");
             }
 
-            // Resolve o CondominiumId (DTO ou sender)
+            // Resolve the CondominiumId (from the DTO or the sender)
             var condominiumId = ResolveCondominiumId(messageDto, sender);
 
-            // Criar a mensagem
+            // Create the message
             var message = new Models.Message
             {
                 Content = messageDto.Content,
@@ -89,10 +89,10 @@ namespace SmartCondoApi.Services.Message
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 
-            // Determinar destinatários
+            // Determine the recipients
             var recipients = await DetermineRecipients(messageDto, sender, senderPermissions);
 
-            // Criar registros UserMessage para cada destinatário
+            // Create a UserMessage record for each recipient
             foreach (var recipient in recipients)
             {
                 _context.UserMessages.Add(new UserMessage
@@ -112,24 +112,24 @@ namespace SmartCondoApi.Services.Message
 
         private bool ValidateSenderPermissions(UserProfile sender, MessageCreateDto messageDto, UserPermissionsDTO senderPermissions)
         {
-            // Verificar se pode enviar mensagens individuais/grupo
+            // Check whether individual/group messages are allowed
             if (messageDto.Scope == MessageScope.Individual && !senderPermissions.CanSendToIndividuals)
                 return false;
 
             if (messageDto.Scope != MessageScope.Individual && !senderPermissions.CanSendToGroups)
                 return false;
 
-            // Verificar destinatário individual
+            // Check the individual recipient
             if (messageDto.Scope == MessageScope.Individual && messageDto.RecipientUserId.HasValue)
             {
-                // Verificação adicional será feita em DetermineRecipients
+                // Further validation happens in DetermineRecipients
                 return true;
             }
 
-            // Verificar se está tentando enviar para outro condomínio
+            // Check whether this is an attempt to send to another condominium
             if (messageDto.CondominiumId.HasValue && messageDto.CondominiumId != sender.CondominiumId)
             {
-                // Scope irrestrito é quem pode enviar para outros condomínios
+                // Unrestricted scope is what allows sending to other condominiums
                 return senderPermissions.CanManageAllCondominiums;
             }
 
@@ -142,7 +142,7 @@ namespace SmartCondoApi.Services.Message
                 .Include(u => u.UserType)
                 .AsQueryable();
 
-            // Mensagem individual
+            // Individual message
             if (messageDto.Scope == MessageScope.Individual && messageDto.RecipientUserId.HasValue)
             {
                 var recipient = await query.FirstOrDefaultAsync(u => u.Id == messageDto.RecipientUserId.Value);
@@ -156,12 +156,12 @@ namespace SmartCondoApi.Services.Message
                 var userRecipient = await _context.Users.FirstOrDefaultAsync(ur => ur.Id == recipient.Id);
 
                 if (userRecipient == null)
-                    throw new InvalidOperationException("Login de usuario não identificado");
+                    throw new InvalidOperationException("Recipient login not found");
 
                 if (!userRecipient.Enabled)
                     throw new InvalidOperationException("Cannot send message to disabled user");
 
-                // Verificar se o tipo do destinatário é permitido
+                // Check whether the recipient's user type is allowed
                 if (!senderPermissions.AllowedRecipientTypes.Contains(recipient.UserType.Name))
                 {
                     _logger.LogWarning("Sender {SenderType} not allowed to send to recipient {RecipientType}",
@@ -169,7 +169,7 @@ namespace SmartCondoApi.Services.Message
                     throw new UnauthorizedAccessException($"You can't send messages to {recipient.UserType.Description}");
                 }
 
-                // Verificar se está no mesmo condomínio (exceto para escopo irrestrito)
+                // Check whether they're in the same condominium (except for unrestricted scope)
                 if (!senderPermissions.CanManageAllCondominiums &&
                     recipient.CondominiumId != sender.CondominiumId)
                 {
@@ -182,7 +182,7 @@ namespace SmartCondoApi.Services.Message
 
             query = query.Where(me => me.Id != sender.Id);
 
-            // Aplicar filtros baseados no escopo
+            // Apply filters based on the scope
             if (messageDto.CondominiumId.HasValue)
             {
                 query = query.Where(u => u.CondominiumId == messageDto.CondominiumId);
@@ -199,14 +199,14 @@ namespace SmartCondoApi.Services.Message
             }
             else if (sender.CondominiumId.HasValue)
             {
-                // Se não especificado, usar o condomínio do remetente
+                // If not specified, use the sender's own condominium
                 query = query.Where(u => u.CondominiumId == sender.CondominiumId);
             }
 
-            // Filtrar apenas tipos de destinatários permitidos
+            // Filter to only the allowed recipient types
             query = query.Where(u => senderPermissions.AllowedRecipientTypes.Contains(u.UserType.Name));
 
-            // Funcionários só podem enviar para residentes (exceto se configurado diferente)
+            // Employees may only send to residents (unless configured otherwise)
             if (UserTypeRoles.IsEmployee(sender.UserType.Name) &&
                 !senderPermissions.AllowedRecipientTypes.Contains("Resident"))
             {
@@ -289,7 +289,7 @@ namespace SmartCondoApi.Services.Message
                     TowerId = m.TowerId,
                     TowerName = m.Tower != null ? m.Tower.Name : null,
                     FloorId = m.FloorId,
-                    // Para mensagens enviadas, pegamos o status de leitura do primeiro destinatário
+                    // For sent messages, take the read status from the first recipient
                     IsRead = m.UserMessages.Any() && m.UserMessages.First().IsRead,
                     ReadDate = m.UserMessages.Any() ? m.UserMessages.First().ReadDate : null
                 })
@@ -302,7 +302,7 @@ namespace SmartCondoApi.Services.Message
         {
             var userId = actor.Id;
 
-            // Verifica se o usuário tem acesso à mensagem (como remetente ou destinatário)
+            // Check whether the user has access to the message (as sender or recipient)
             var message = await _context.Messages
                 .Include(m => m.Sender)
                     .ThenInclude(s => s.UserType)

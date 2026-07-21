@@ -11,36 +11,36 @@ namespace SmartCondoApi.Services.User
     {
         public async Task<UserProfileResponseDTO> Add(UserProfileCreateDTO userCreateDTO, AuthenticatedActor actor)
         {
-            // Valida o CPF/CNPJ
+            // Validate the CPF/CNPJ
             if (!ValidateRegistrationNumber(userCreateDTO.RegistrationNumber))
             {
-                throw new InvalidRegistrationNumberIDException("CPF/CNPJ inválido");
+                throw new InvalidRegistrationNumberIDException("Invalid CPF/CNPJ");
             }
 
             if (null == userCreateDTO.User)
             {
-                throw new InvalidCredentialsException("Nenhum login encontrado");
+                throw new InvalidCredentialsException("No login was provided");
             }
 
             var userDb = await _dependencies.UserManager.FindByEmailAsync(userCreateDTO.User.Email);
 
             if (null != userDb)
             {
-                throw new LoginAlreadyExistsException($"Login {userCreateDTO.User.Email} já cadastrado");
+                throw new LoginAlreadyExistsException($"Login {userCreateDTO.User.Email} is already registered");
             }
 
             var context = _dependencies.Context;
 
             if (context.UserProfiles.Any(u => u.RegistrationNumber == userCreateDTO.RegistrationNumber))
             {
-                throw new UserAlreadyExistsException($"CPF {userCreateDTO.RegistrationNumber} já cadastrado");
+                throw new UserAlreadyExistsException($"CPF {userCreateDTO.RegistrationNumber} is already registered");
             }
 
             var userTypes = await _dependencies.Context.UserTypes.FirstOrDefaultAsync(ut => ut.Id == userCreateDTO.UserTypeId);
 
             if (null == userTypes)
             {
-                throw new ArgumentException($"Tipo de usuário {userCreateDTO.UserTypeId} não encontrado");
+                throw new ArgumentException($"User type {userCreateDTO.UserTypeId} not found");
             }
 
             EnsureCallerCanRegister(actor.Role, userTypes.Name);
@@ -50,7 +50,7 @@ namespace SmartCondoApi.Services.User
             if (null == condo)
             {
                 if (IsSystemAdmin(userTypes.Name) == false)
-                    throw new ArgumentException($"Condominio {userCreateDTO.CondominiumId} não encontrado");
+                    throw new ArgumentException($"Condominium {userCreateDTO.CondominiumId} not found");
 
                 SystemAdministrationValidations(userCreateDTO, userTypes, condo);
             }
@@ -58,7 +58,7 @@ namespace SmartCondoApi.Services.User
             {
                 if (!condo.Enabled)
                 {
-                    throw new CondominiumDisabledException($"Condomínio {condo.Name} desabilitado. Entre em contato com o administrador para mais informações.");
+                    throw new CondominiumDisabledException($"Condominium {condo.Name} is disabled. Contact the administrator for more information.");
                 }
 
                 var actorTenantId = await context.GetActorCondominiumIdAsync(actor.Id);
@@ -117,7 +117,7 @@ namespace SmartCondoApi.Services.User
             }
             catch (DbUpdateConcurrencyException)
             {
-                throw new UsersExceedException("O número máximo de usuários permitidos para este condomínio foi atingido. Entre em contato com o administrador para mais informações.");
+                throw new UsersExceedException("The maximum number of users allowed for this condominium has been reached. Contact the administrator for more information.");
             }
 
             await _dependencies.UserManager.UpdateSecurityStampAsync(user);
@@ -137,7 +137,7 @@ namespace SmartCondoApi.Services.User
                 FloorId = userCreateDTO.FloorId,
                 Apartment = userCreateDTO.Apartment,
                 ParkingSpaceNumber = userCreateDTO.ParkingSpaceNumber,
-                Message = "Usuário registrado. Verifique seu e-mail para confirmar o cadastro.",
+                Message = "User registered. Check your e-mail to confirm the registration.",
                 Token = token
             };
         }
@@ -210,7 +210,7 @@ namespace SmartCondoApi.Services.User
 
             if (userCreateDTO.Apartment <= 0)
             {
-                throw new InconsistentDataException($"Número de apartamento incorreto.");
+                throw new InconsistentDataException($"Invalid apartment number.");
             }
 
             var context = _dependencies.Context;
@@ -219,15 +219,15 @@ namespace SmartCondoApi.Services.User
 
             if (null == tower)
             {
-                throw new ArgumentException($"Torre {userCreateDTO.TowerId} não encontrada");
+                throw new ArgumentException($"Tower {userCreateDTO.TowerId} not found");
             }
 
             if (userCreateDTO.FloorId > tower.FloorCount)
             {
-                throw new InconsistentDataException($"Número de andar incorreto. A torre {tower.Name} possui {tower.FloorCount} andar(es)");
+                throw new InconsistentDataException($"Invalid floor number. Tower {tower.Name} has {tower.FloorCount} floor(s)");
             }
 
-            //Regra para 1 apartamento por vaga.
+            // Rule: one apartment per parking space.
             var usersParkingSpaceNumber = (from profiles in context.UserProfiles
                                            join users in context.Users on profiles.Id equals users.Id
                                            where users.Enabled == true
@@ -247,7 +247,7 @@ namespace SmartCondoApi.Services.User
                     _logger.LogDebug($"Apartment: {item.User.Apartment} of {item.User.Name} using the parkingspacenumber");
                 }
 
-                throw new ParkingSpaceNumberException($"Número de vaga especificada já está em uso para outro apartamento. Entre em contato com o administrador para mais informações.");
+                throw new ParkingSpaceNumberException($"The specified parking space number is already in use by another apartment. Contact the administrator for more information.");
             }
         }
 
@@ -260,17 +260,17 @@ namespace SmartCondoApi.Services.User
         {
             if (null == userUpdateDTO)
             {
-                throw new InvalidCredentialsException("Dados de usuario são obrigatórios.");
+                throw new InvalidCredentialsException("User data is required.");
             }
 
             var context = _dependencies.Context;
 
-            // Busca o usuário existente no banco de dados
+            // Look up the existing user in the database
             var userProfile = await context.UserProfiles
                 .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (null == userProfile)
-                throw new UserNotFoundException("Usuário não encontrado.");
+                throw new UserNotFoundException("User not found.");
 
             var isSelf = actor.Id == userProfile.Id;
             var actorTenantId = await context.GetActorCondominiumIdAsync(actor.Id);
@@ -315,12 +315,12 @@ namespace SmartCondoApi.Services.User
             if (userUpdateDTO.FloorId.HasValue) userProfile.FloorNumber = userUpdateDTO.FloorId.Value;
             if (userUpdateDTO.Apartment.HasValue) userProfile.Apartment = userUpdateDTO.Apartment.Value;
 
-            // Atualiza os dados do Login, se fornecido
+            // Update the login data, if provided
             if (userUpdateDTO.User != null)
             {
-                //não altera o email!
+                // never changes the email!
                 //if (userUpdateDTO.User.Email != null) user.Email = userUpdateDTO.User.Email;
-                //não é o caminho para desabilitar
+                // not the path to disable the account
                 //if (userUpdateDTO.User.Enabled.HasValue) user.Enabled = userUpdateDTO.User.Enabled.Value;
 
                 if (!string.IsNullOrEmpty(userUpdateDTO.User.Password))
@@ -340,7 +340,7 @@ namespace SmartCondoApi.Services.User
 
                 if (destinationCondo == null)
                 {
-                    throw new ArgumentException($"Condominio {userUpdateDTO.CondominiumId} não encontrado");
+                    throw new ArgumentException($"Condominium {userUpdateDTO.CondominiumId} not found");
                 }
 
                 try
@@ -349,7 +349,7 @@ namespace SmartCondoApi.Services.User
                 }
                 catch (UsersExceedException)
                 {
-                    throw new UsersExceedException("O número máximo de usuários permitidos para o condomínio de destino foi atingido.");
+                    throw new UsersExceedException("The maximum number of users allowed for the destination condominium has been reached.");
                 }
 
                 if (originCondominiumId.HasValue)
@@ -370,7 +370,7 @@ namespace SmartCondoApi.Services.User
             }
             catch (DbUpdateConcurrencyException)
             {
-                throw new UsersExceedException("O número máximo de usuários permitidos para o condomínio de destino foi atingido.");
+                throw new UsersExceedException("The maximum number of users allowed for the destination condominium has been reached.");
             }
 
             return new UserProfileResponseDTO()
@@ -382,7 +382,7 @@ namespace SmartCondoApi.Services.User
                 TowerId = userProfile.TowerId,
                 FloorId = userProfile.FloorNumber,
                 Apartment = userProfile.Apartment,
-                Message = "Usuário atualizado.",
+                Message = "User updated.",
             };
         }
 
@@ -396,7 +396,7 @@ namespace SmartCondoApi.Services.User
             var userProfile = await _dependencies.Context.UserProfiles.FindAsync(id);
             if (userProfile == null)
             {
-                throw new UserNotFoundException("Perfil de usuário não encontrado.");
+                throw new UserNotFoundException("User profile not found.");
             }
 
             if (actor.Id != userProfile.Id)
@@ -411,7 +411,7 @@ namespace SmartCondoApi.Services.User
             var user = await _dependencies.UserManager.FindByIdAsync(id.ToString());
             if (user == null)
             {
-                throw new UserNotFoundException("Usuário não encontrado.");
+                throw new UserNotFoundException("User not found.");
             }
 
             var dto = new UserProfileEditDTO
@@ -430,7 +430,7 @@ namespace SmartCondoApi.Services.User
                 ParkingSpaceNumber = userProfile.ParkingSpaceNumber,
                 Email = user.Email ?? string.Empty,
                 Enabled = user.Enabled,
-                PasswordLength = 8 // Não sabemos o tamanho real, será apenas visual
+                PasswordLength = 8 // Real length is unknown; this is only for display
             };
 
             return dto;
@@ -440,13 +440,13 @@ namespace SmartCondoApi.Services.User
         {
             if (id < 1)
             {
-                throw new InconsistentDataException($"Numero do id {id} incorreto.");
+                throw new InconsistentDataException($"Invalid id number {id}.");
             }
 
             var userProfile = await _dependencies.Context.UserProfiles.FindAsync(id);
             if (userProfile == null)
             {
-                throw new UserNotFoundException("Usuário não encontrado.");
+                throw new UserNotFoundException("User not found.");
             }
 
             var actorTenantId = await _dependencies.Context.GetActorCondominiumIdAsync(actor.Id);
