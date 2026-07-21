@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SmartCondoApi.Controllers;
 using SmartCondoApi.Dto;
+using SmartCondoApi.Models;
 
 namespace SmartCondoApi.Tests.Controllers
 {
@@ -19,9 +20,9 @@ namespace SmartCondoApi.Tests.Controllers
             _context?.Dispose();
         }
 
-        private async Task<OkObjectResult> PerformSuccessAddUserTest(UserProfileCreateDTO userCreateDTO, string? callerRole = null)
+        private async Task<OkObjectResult> PerformSuccessAddUserTest(UserProfileCreateDTO userCreateDTO, string? callerRole = null, long callerId = 1)
         {
-            var userProfileController = LoadUserProfileController(callerRole ?? "SystemAdministrator");
+            var userProfileController = LoadUserProfileController(callerRole ?? "SystemAdministrator", callerId);
 
             var result = await userProfileController.AddUser(userCreateDTO);
 
@@ -32,9 +33,9 @@ namespace SmartCondoApi.Tests.Controllers
             return okObjectResult;
         }
 
-        private async Task<ObjectResult> PerformForbiddenAddUserTest(UserProfileCreateDTO userCreateDTO, string? callerRole, string message)
+        private async Task<ObjectResult> PerformForbiddenAddUserTest(UserProfileCreateDTO userCreateDTO, string? callerRole, string message, long callerId = 1)
         {
-            var userProfileController = LoadUserProfileController(callerRole);
+            var userProfileController = LoadUserProfileController(callerRole, callerId);
 
             var result = await userProfileController.AddUser(userCreateDTO);
 
@@ -157,7 +158,8 @@ namespace SmartCondoApi.Tests.Controllers
                 }
             };
 
-            var result = await PerformSuccessAddUserTest(fakeUserCreateDTO, "ResidentCommitteeMember");
+            // Caller id must belong to a profile whose own CondominiumId matches the target (Step 4: Scope).
+            var result = await PerformSuccessAddUserTest(fakeUserCreateDTO, "ResidentCommitteeMember", callerId: 2);
             Console.WriteLine("AddUserWithNarrowRegisterableTypesSuccess: " + result.Value);
         }
 
@@ -298,6 +300,112 @@ namespace SmartCondoApi.Tests.Controllers
 
             Assert.IsInstanceOfType(result, typeof(OkResult));
             Console.WriteLine("DeleteProfileSuccessWithAdminCapability: done");
+        }
+
+        private async Task<long> SeedResidentInOtherCondominiumAsync()
+        {
+            var otherCondoResident = new UserProfile
+            {
+                Id = 50,
+                Name = "Resident in Condominium C",
+                Address = "Other Street",
+                Phone1 = "9999999999",
+                UserTypeId = 3,
+                RegistrationNumber = "99999999999",
+                CondominiumId = 3,
+                TowerId = 4,
+                FloorNumber = 1,
+                Apartment = 1
+            };
+
+            _context.UserProfiles.Add(otherCondoResident);
+            await _context.SaveChangesAsync();
+
+            return otherCondoResident.Id;
+        }
+
+        [TestMethod]
+        public async Task GetProfileSuccessSameTenantWithAdminCapability()
+        {
+            Console.WriteLine("GetProfileSuccessSameTenantWithAdminCapability begin");
+
+            var userProfileController = LoadUserProfileController("CondominiumAdministrator", 2);
+
+            var result = await userProfileController.GetUser(3);
+
+            var okResult = SuccessAssert(result);
+            Console.WriteLine("GetProfileSuccessSameTenantWithAdminCapability: " + okResult.Value);
+        }
+
+        [TestMethod]
+        public async Task GetProfileForbiddenAcrossTenants()
+        {
+            Console.WriteLine("GetProfileForbiddenAcrossTenants begin");
+
+            var otherCondoResidentId = await SeedResidentInOtherCondominiumAsync();
+            var userProfileController = LoadUserProfileController("CondominiumAdministrator", 2);
+
+            var result = await userProfileController.GetUser(otherCondoResidentId);
+
+            var forbiddenResult = ForbiddenAssert(result, "not authorized to view");
+            Console.WriteLine("GetProfileForbiddenAcrossTenants: " + forbiddenResult!.Value);
+        }
+
+        [TestMethod]
+        public async Task UpdateProfileForbiddenAcrossTenants()
+        {
+            Console.WriteLine("UpdateProfileForbiddenAcrossTenants begin");
+
+            var otherCondoResidentId = await SeedResidentInOtherCondominiumAsync();
+            var userProfileController = LoadUserProfileController("CondominiumAdministrator", 2);
+
+            var result = await userProfileController.UpdateUser(otherCondoResidentId, new UserProfileUpdateDTO { Name = "Hijacked Across Tenants" });
+
+            var forbiddenResult = ForbiddenAssert(result, "not authorized to edit");
+            Console.WriteLine("UpdateProfileForbiddenAcrossTenants: " + forbiddenResult!.Value);
+        }
+
+        [TestMethod]
+        public async Task DeleteProfileForbiddenAcrossTenants()
+        {
+            Console.WriteLine("DeleteProfileForbiddenAcrossTenants begin");
+
+            var otherCondoResidentId = await SeedResidentInOtherCondominiumAsync();
+            var userProfileController = LoadUserProfileController("CondominiumAdministrator", 2);
+
+            var result = await userProfileController.Delete(otherCondoResidentId);
+
+            var forbiddenResult = ForbiddenAssert(result, "not authorized to delete");
+            Console.WriteLine("DeleteProfileForbiddenAcrossTenants: " + forbiddenResult!.Value);
+        }
+
+        [TestMethod]
+        public async Task AddUserForbiddenWhenTargetCondominiumOutsideCallerScope()
+        {
+            Console.WriteLine("AddUserForbiddenWhenTargetCondominiumOutsideCallerScope begin");
+
+            var fakeUserCreateDTO = new UserProfileCreateDTO
+            {
+                Name = "Cross Tenant Resident",
+                Address = "123 Fake Street",
+                Phone1 = "6666666666",
+                UserTypeId = 3, // Resident
+                RegistrationNumber = "60117386057",
+                CondominiumId = 3, // CondominiumAdministrator (id=2) belongs to Condominium 1, not 3
+                TowerId = 4,
+                FloorId = 1,
+                Apartment = 202,
+                ParkingSpaceNumber = 40,
+                User = new UserCreateDTO
+                {
+                    Email = "crosstenant@example.com",
+                    Password = "Aa1!aaaa",
+                    Enabled = true
+                }
+            };
+
+            var result = await PerformForbiddenAddUserTest(fakeUserCreateDTO, "CondominiumAdministrator", "not authorized to register users in this condominium", callerId: 2);
+            Console.WriteLine("AddUserForbiddenWhenTargetCondominiumOutsideCallerScope: " + result.Value);
         }
 
         private async Task<BadRequestObjectResult> PerformBadRequestAddUserTest(UserProfileCreateDTO userCreateDTO, string message)

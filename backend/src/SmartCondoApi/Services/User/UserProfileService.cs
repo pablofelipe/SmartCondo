@@ -61,6 +61,12 @@ namespace SmartCondoApi.Services.User
                     throw new CondominiumDisabledException($"Condomínio {condo.Name} desabilitado. Entre em contato com o administrador para mais informações.");
                 }
 
+                var actorTenantId = await context.GetActorCondominiumIdAsync(actor.Id);
+                if (!ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, condo.Id, p => p.CanRegisterUsers))
+                {
+                    throw new UnauthorizedAccessException("You are not authorized to register users in this condominium");
+                }
+
                 var count = (from profiles in context.UserProfiles
                              join users in context.Users on profiles.Id equals users.Id
                              where users.Enabled == true && profiles.CondominiumId == userCreateDTO.CondominiumId
@@ -266,9 +272,10 @@ namespace SmartCondoApi.Services.User
                 throw new UserNotFoundException("Usuário não encontrado.");
 
             var isSelf = actor.Id == userProfile.Id;
-            var hasEditCapability = RolePermissions.GetPermissions().TryGetValue(actor.Role, out var callerPermissions) && callerPermissions.CanEditUsers;
+            var actorTenantId = await context.GetActorCondominiumIdAsync(actor.Id);
+            var hasAdminAuthority = ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, userProfile.CondominiumId, p => p.CanEditUsers);
 
-            if (!isSelf && !hasEditCapability)
+            if (!isSelf && !hasAdminAuthority)
             {
                 throw new UnauthorizedAccessException("You are not authorized to edit this profile");
             }
@@ -278,7 +285,7 @@ namespace SmartCondoApi.Services.User
                 || userUpdateDTO.FloorId.HasValue
                 || userUpdateDTO.Apartment.HasValue;
 
-            if (changesHousingAssignment && !hasEditCapability)
+            if (changesHousingAssignment && !hasAdminAuthority)
             {
                 throw new UnauthorizedAccessException("Only an administrator can change housing assignment");
             }
@@ -338,9 +345,13 @@ namespace SmartCondoApi.Services.User
                 throw new UserNotFoundException("Perfil de usuário não encontrado.");
             }
 
-            if (!ResourceAuthorization.IsAuthorized(actor, userProfile.Id, p => p.CanViewUsers))
+            if (actor.Id != userProfile.Id)
             {
-                throw new UnauthorizedAccessException("You are not authorized to view this profile");
+                var actorTenantId = await _dependencies.Context.GetActorCondominiumIdAsync(actor.Id);
+                if (!ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, userProfile.CondominiumId, p => p.CanViewUsers))
+                {
+                    throw new UnauthorizedAccessException("You are not authorized to view this profile");
+                }
             }
 
             var user = await _dependencies.UserManager.FindByIdAsync(id.ToString());
@@ -384,9 +395,8 @@ namespace SmartCondoApi.Services.User
                 throw new UserNotFoundException("Usuário não encontrado.");
             }
 
-            var hasEditCapability = RolePermissions.GetPermissions().TryGetValue(actor.Role, out var callerPermissions) && callerPermissions.CanEditUsers;
-
-            if (!hasEditCapability)
+            var actorTenantId = await _dependencies.Context.GetActorCondominiumIdAsync(actor.Id);
+            if (!ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, userProfile.CondominiumId, p => p.CanEditUsers))
             {
                 throw new UnauthorizedAccessException("You are not authorized to delete this profile");
             }
