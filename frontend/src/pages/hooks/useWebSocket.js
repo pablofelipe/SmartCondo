@@ -37,7 +37,7 @@ export const useWebSocket = (userId, onMessage) => {
     ws.current.onerror = (error) => {
       console.error('Erro WebSocket:', error);
     };
-  }, [userId, onMessage]);
+  }, [onMessage]);
 
   useEffect(() => {
     if (userId) {
