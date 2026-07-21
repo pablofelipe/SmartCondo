@@ -29,10 +29,18 @@ The following are not resolved by this ADR. None of them block the authorization
 3. **Succession** — what happens to a tenant whose only Tenant Administrator is removed is undecided: manual Platform Operator intervention, automatic promotion of the administrative delegate, or something else.
 4. **Mandate expiry and inheritance** — whether a Delegated Tenant Representative's authority reverts automatically when their real-world mandate ends, or always requires a manual act by the Tenant Administrator, is undecided.
 
+### Deferred decisions
+
+Unlike the open questions above, this is not an unresolved question — it is a decision that has been made (not now), with the reasoning and the criteria for revisiting it recorded explicitly, so the choice stays conscious rather than defaulting by inertia.
+
+**Audit and traceability posture.** This ADR's Consequences state that every Scope grant must be traceable to a specific act of authority; ADR-0009's invariant 7 restates the same requirement. As implemented, that traceability exists only at decision time — the chain of authority is checked and enforced synchronously by the operation that creates the grant. Nothing durable is persisted that would let someone later reconstruct who granted what, to whom, when, and under whose authority — the only records that exist are incidental application log lines, not a structured, queryable trail, and no audit-log entity exists anywhere in the domain model.
+
+This is deliberately deferred, not planned, as of 2026-07-21: no compliance requirement or incident has been reported that would justify the cost of a durable, structured audit trail — a new entity, a migration, and instrumentation across every authorization-relevant write path in the system. Revisit this decision if any of the following occurs: (a) a compliance or contractual requirement to reconstruct authorization history after the fact; (b) an actual incident where the absence of such a trail impeded investigation; (c) a deployment context where an external party (auditor, regulator, enterprise customer) requires it.
+
 ## Consequences
 
-- Every Scope grant must be traceable to a specific act of authority performed by an actor who was themselves authorized, per this chain, to perform it. An operation that creates a new actor's institutional membership without validating the granting actor's position in this chain is a defect against this ADR, not an acceptable shortcut.
+- Every Scope grant must be traceable to a specific act of authority performed by an actor who was themselves authorized, per this chain, to perform it. An operation that creates a new actor's institutional membership without validating the granting actor's position in this chain is a defect against this ADR, not an acceptable shortcut. Per the Deferred decisions above, "traceable" is satisfied at decision time (the chain is checked and enforced when the grant happens); it does not currently imply a durable, after-the-fact audit record.
 - The existing capability fields that encode this chain (which role may bring which other roles into existence) are the source of truth for enforcement; they must not be duplicated or reimplemented ad hoc by individual use cases.
 - No actor may, through their own granted capability, produce another actor with authority equal to or greater than their own, except where this ADR explicitly allows it (the Platform Operator root).
-- The open questions above are explicitly out of scope for the authorization work currently planned. Any future work on revocation, recovery, succession, or mandate handling must amend this ADR rather than being implemented as an isolated feature.
+- The open questions and deferred decisions above are explicitly out of scope for the authorization work currently planned. Any future work on revocation, recovery, succession, mandate handling, or audit/traceability must amend this ADR rather than being implemented as an isolated feature.
 - This ADR depends on ADR-0005 and is depended upon by the Scope-enforcement work planned for the implementation phase; it does not by itself change any running behavior.
