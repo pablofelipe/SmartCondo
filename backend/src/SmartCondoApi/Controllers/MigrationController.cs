@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartCondoApi.Models;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace SmartCondoApi.Controllers
 {
@@ -39,7 +41,9 @@ namespace SmartCondoApi.Controllers
                 return Unauthorized("Migration auth key not configured");
             }
 
-            if (Request.Headers["X-Migration-Auth"] != authKey)
+            var providedKey = Request.Headers["X-Migration-Auth"].ToString();
+
+            if (!FixedTimeEquals(providedKey, authKey))
             {
                 _logger.LogWarning("Tentativa de acesso não autorizado");
                 return Unauthorized();
@@ -60,6 +64,22 @@ namespace SmartCondoApi.Controllers
                 _logger.LogError(ex, "Falha na migração");
                 return StatusCode(500, $"Migration failed: {ex.Message}");
             }
+        }
+
+        // A plain string comparison short-circuits on the first mismatched byte, which leaks the key
+        // one character at a time through response-time differences. The length check still leaks
+        // length itself, but not the key's content - the accepted trade-off for this kind of comparison.
+        private static bool FixedTimeEquals(string provided, string expected)
+        {
+            var providedBytes = Encoding.UTF8.GetBytes(provided);
+            var expectedBytes = Encoding.UTF8.GetBytes(expected);
+
+            if (providedBytes.Length != expectedBytes.Length)
+            {
+                return false;
+            }
+
+            return CryptographicOperations.FixedTimeEquals(providedBytes, expectedBytes);
         }
 
         private async Task SeedDatabase(
