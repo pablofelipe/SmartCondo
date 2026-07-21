@@ -3,6 +3,7 @@ using SmartCondoApi.Models;
 using SmartCondoApi.Models.Permissions;
 using SmartCondoApi.GraphQL.Inputs;
 using SmartCondoApi.Exceptions;
+using SmartCondoApi.Infra;
 
 namespace SmartCondoApi.Services.Vehicle
 {
@@ -10,7 +11,12 @@ namespace SmartCondoApi.Services.Vehicle
     {
         public async Task<Models.Vehicle> CreateVehicleAsync(Models.Vehicle vehicle, AuthenticatedActor actor)
         {
-            if (!ResourceAuthorization.IsAuthorized(actor, vehicle.UserId, p => p.CanRegisterVehicles))
+            var isSelf = actor.Id == vehicle.UserId;
+            var actorTenantId = await _context.GetActorCondominiumIdAsync(actor.Id);
+            var ownerTenantId = await _context.GetActorCondominiumIdAsync(vehicle.UserId);
+            var hasAdminAuthority = ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, ownerTenantId, p => p.CanRegisterVehicles);
+
+            if (!isSelf && !hasAdminAuthority)
             {
                 throw new UnauthorizedAccessException("You are not authorized to register this vehicle");
             }
@@ -22,13 +28,17 @@ namespace SmartCondoApi.Services.Vehicle
 
         public async Task<bool> DeleteVehicleAsync(int id, AuthenticatedActor actor)
         {
-            var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.Id == id);
+            var vehicle = await _context.Vehicles.Include(v => v.User).FirstOrDefaultAsync(v => v.Id == id);
             if (vehicle == null)
             {
                 return false;
             }
 
-            if (!ResourceAuthorization.IsAuthorized(actor, vehicle.UserId, p => p.CanEditVehicles))
+            var isSelf = actor.Id == vehicle.UserId;
+            var actorTenantId = await _context.GetActorCondominiumIdAsync(actor.Id);
+            var hasAdminAuthority = ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, vehicle.User.CondominiumId, p => p.CanEditVehicles);
+
+            if (!isSelf && !hasAdminAuthority)
             {
                 throw new UnauthorizedAccessException("You are not authorized to delete this vehicle");
             }
@@ -71,6 +81,12 @@ namespace SmartCondoApi.Services.Vehicle
                             User = userProfile
                         };
 
+            if (!permissions.CanManageAllCondominiums)
+            {
+                var actorTenantId = await _context.GetActorCondominiumIdAsync(actor.Id);
+                query = query.Where(v => v.User.CondominiumId == actorTenantId);
+            }
+
             if (!string.IsNullOrEmpty(filter.LicensePlate))
                 query = query.Where(v => EF.Functions.ILike(v.LicensePlate, $"%{filter.LicensePlate}%"));
 
@@ -103,7 +119,11 @@ namespace SmartCondoApi.Services.Vehicle
                 return null;
             }
 
-            if (!ResourceAuthorization.IsAuthorized(actor, vehicle.UserId, p => p.CanViewVehicles))
+            var isSelf = actor.Id == vehicle.UserId;
+            var actorTenantId = await _context.GetActorCondominiumIdAsync(actor.Id);
+            var hasAdminAuthority = ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, vehicle.User.CondominiumId, p => p.CanViewVehicles);
+
+            if (!isSelf && !hasAdminAuthority)
             {
                 throw new UnauthorizedAccessException("You are not authorized to view this vehicle");
             }
@@ -113,24 +133,36 @@ namespace SmartCondoApi.Services.Vehicle
 
         public async Task<Models.Vehicle> UpdateVehicleAsync(Models.Vehicle vehicle, AuthenticatedActor actor)
         {
-            var existing = await _context.Vehicles.AsNoTracking().FirstOrDefaultAsync(v => v.Id == vehicle.Id);
+            var existing = await _context.Vehicles.AsNoTracking().Include(v => v.User).FirstOrDefaultAsync(v => v.Id == vehicle.Id);
             if (existing == null)
             {
                 return null;
             }
 
             var isSelf = actor.Id == existing.UserId;
-            var hasEditCapability = RolePermissions.GetPermissions().TryGetValue(actor.Role, out var permissions) && permissions.CanEditVehicles;
+            var actorTenantId = await _context.GetActorCondominiumIdAsync(actor.Id);
+            var hasAdminAuthority = ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, existing.User.CondominiumId, p => p.CanEditVehicles);
 
-            if (!isSelf && !hasEditCapability)
+            if (!isSelf && !hasAdminAuthority)
             {
                 throw new UnauthorizedAccessException("You are not authorized to edit this vehicle");
             }
 
-            if (!hasEditCapability)
+            if (!hasAdminAuthority)
             {
                 // Self-service can edit its own vehicle, but never reassign it to someone else.
                 vehicle.UserId = existing.UserId;
+            }
+            else if (vehicle.UserId != existing.UserId)
+            {
+                // Reassigning a vehicle to another user is itself an administrative act on the
+                // destination owner's tenant, not just the origin one.
+                var destinationTenantId = await _context.GetActorCondominiumIdAsync(vehicle.UserId);
+
+                if (!ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, destinationTenantId, p => p.CanEditVehicles))
+                {
+                    throw new UnauthorizedAccessException("You are not authorized to reassign this vehicle to that user");
+                }
             }
 
             _context.Vehicles.Update(vehicle);
