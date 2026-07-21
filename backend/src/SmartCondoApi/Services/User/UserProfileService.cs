@@ -61,7 +61,7 @@ namespace SmartCondoApi.Services.User
                     throw new CondominiumDisabledException($"Condominium {condo.Name} is disabled. Contact the administrator for more information.");
                 }
 
-                var actorTenantId = await context.GetActorCondominiumIdAsync(actor.Id);
+                var actorTenantId = actor.CondominiumId;
                 if (!ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, condo.Id, p => p.CanRegisterUsers))
                 {
                     throw new UnauthorizedAccessException("You are not authorized to register users in this condominium");
@@ -273,7 +273,7 @@ namespace SmartCondoApi.Services.User
                 throw new UserNotFoundException("User not found.");
 
             var isSelf = actor.Id == userProfile.Id;
-            var actorTenantId = await context.GetActorCondominiumIdAsync(actor.Id);
+            var actorTenantId = actor.CondominiumId;
             var hasAdminAuthority = ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, userProfile.CondominiumId, p => p.CanEditUsers);
 
             if (!isSelf && !hasAdminAuthority)
@@ -401,7 +401,7 @@ namespace SmartCondoApi.Services.User
 
             if (actor.Id != userProfile.Id)
             {
-                var actorTenantId = await _dependencies.Context.GetActorCondominiumIdAsync(actor.Id);
+                var actorTenantId = actor.CondominiumId;
                 if (!ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, userProfile.CondominiumId, p => p.CanViewUsers))
                 {
                     throw new UnauthorizedAccessException("You are not authorized to view this profile");
@@ -449,7 +449,7 @@ namespace SmartCondoApi.Services.User
                 throw new UserNotFoundException("User not found.");
             }
 
-            var actorTenantId = await _dependencies.Context.GetActorCondominiumIdAsync(actor.Id);
+            var actorTenantId = actor.CondominiumId;
             if (!ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, userProfile.CondominiumId, p => p.CanEditUsers))
             {
                 throw new UnauthorizedAccessException("You are not authorized to delete this profile");

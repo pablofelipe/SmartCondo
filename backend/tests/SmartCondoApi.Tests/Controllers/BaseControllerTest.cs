@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using SmartCondoApi.Controllers;
 using SmartCondoApi.Dto;
+using SmartCondoApi.Infra;
 using SmartCondoApi.Models;
 using SmartCondoApi.Services.Auth;
 using SmartCondoApi.Services.Crypto;
@@ -121,7 +122,7 @@ namespace SmartCondoApi.Tests.Controllers
 
             var loggerMockController = new Mock<ILogger<UserProfileController>>();
 
-            var userProfileControllerDependencies = new UserProfileControllerDependencies(userService, mockLinkGeneratorService.Object, emailService, emailConfService, loggerMockController.Object);
+            var userProfileControllerDependencies = new UserProfileControllerDependencies(userService, mockLinkGeneratorService.Object, emailService, emailConfService, loggerMockController.Object, new AuthenticatedActorResolver(_context));
 
             var callerClaims = callerRole != null
                 ? new ClaimsIdentity([

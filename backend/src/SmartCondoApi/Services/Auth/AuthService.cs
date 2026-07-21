@@ -51,11 +51,18 @@ namespace SmartCondoApi.Services.Auth
                 throw new IncorrectPasswordException("Senha incorreta.");
             }
 
-            var userProfile = await _dependencies.Context.UserProfiles.FirstOrDefaultAsync(x => x.Id == user.Id);
+            var userProfile = await _dependencies.Context.UserProfiles
+                .Include(u => u.Condominium)
+                .FirstOrDefaultAsync(x => x.Id == user.Id);
 
             if (null == userProfile)
             {
                 throw new UserNotFoundException("Perfil de usuário não encontrado.");
+            }
+
+            if (userProfile.CondominiumId.HasValue && userProfile.Condominium?.Enabled == false)
+            {
+                throw new CondominiumDisabledException("O condomínio deste usuário está desabilitado.");
             }
 
             var dbUserType = await _dependencies.Context.UserTypes.FirstOrDefaultAsync(us => us.Id == userProfile.UserTypeId);

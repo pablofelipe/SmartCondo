@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using SmartCondoApi.GraphQL.Inputs;
 using SmartCondoApi.GraphQL.Queries;
+using SmartCondoApi.Infra;
 using SmartCondoApi.Models.Permissions;
 using SmartCondoApi.Services.Vehicle;
 using System.Security.Claims;
@@ -26,6 +27,14 @@ namespace SmartCondoApi.Tests.GraphQL
             return accessor.Object;
         }
 
+        private static IAuthenticatedActorResolver ResolverFor(long actorId, string role)
+        {
+            var actor = new AuthenticatedActor(actorId, role, true, null, true);
+            var resolver = new Mock<IAuthenticatedActorResolver>();
+            resolver.Setup(r => r.ResolveAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(actor);
+            return resolver.Object;
+        }
+
         [TestMethod]
         public async Task GetVehicle_UnexpectedException_DoesNotLeakExceptionMessage()
         {
@@ -37,7 +46,7 @@ namespace SmartCondoApi.Tests.GraphQL
             var queries = new VehicleQueries();
 
             var ex = await Assert.ThrowsExceptionAsync<GraphQLException>(() =>
-                queries.GetVehicle(vehicleService.Object, HttpContextAccessorFor(1, "Resident"), Mock.Of<ILogger<VehicleQueries>>(), "1"));
+                queries.GetVehicle(vehicleService.Object, HttpContextAccessorFor(1, "Resident"), Mock.Of<ILogger<VehicleQueries>>(), ResolverFor(1, "Resident"), "1"));
 
             var message = ex.Errors[0].Message;
             Assert.IsFalse(message.Contains("connection string"), "The GraphQL error must not leak the underlying exception message");
@@ -50,7 +59,7 @@ namespace SmartCondoApi.Tests.GraphQL
             var queries = new VehicleQueries();
 
             var ex = await Assert.ThrowsExceptionAsync<GraphQLException>(() =>
-                queries.GetVehicle(vehicleService.Object, HttpContextAccessorFor(1, "Resident"), Mock.Of<ILogger<VehicleQueries>>(), "not-a-number"));
+                queries.GetVehicle(vehicleService.Object, HttpContextAccessorFor(1, "Resident"), Mock.Of<ILogger<VehicleQueries>>(), ResolverFor(1, "Resident"), "not-a-number"));
 
             Assert.AreEqual("VehicleID must be numeric", ex.Errors[0].Message);
         }
@@ -66,7 +75,7 @@ namespace SmartCondoApi.Tests.GraphQL
             var queries = new VehicleQueries();
 
             var ex = await Assert.ThrowsExceptionAsync<GraphQLException>(() =>
-                queries.GetVehicles(vehicleService.Object, HttpContextAccessorFor(1, "Resident"), Mock.Of<ILogger<VehicleQueries>>()));
+                queries.GetVehicles(vehicleService.Object, HttpContextAccessorFor(1, "Resident"), Mock.Of<ILogger<VehicleQueries>>(), ResolverFor(1, "Resident")));
 
             var message = ex.Errors[0].Message;
             Assert.IsFalse(message.Contains("connection string"), "The GraphQL error must not leak the underlying exception message");

@@ -159,6 +159,14 @@ namespace SmartCondoApi.Tests.Controllers
         }
 
         [TestMethod]
+        public async Task LoginCondominiumDisabled()
+        {
+            Console.WriteLine("LoginCondominiumDisabled begin");
+            var result = await PerformUnauthorizedLoginTest("resident009@bbb.com", "Ee@789!", "O condomínio deste usuário está desabilitado.");
+            Console.WriteLine("LoginCondominiumDisabled: " + result.Value);
+        }
+
+        [TestMethod]
         public async Task LoginWrongPassword()
         {
             Console.WriteLine("LoginWrongPassword begin");

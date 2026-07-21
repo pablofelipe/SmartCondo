@@ -17,11 +17,12 @@ namespace SmartCondoApi.GraphQL.Queries
             [Service] IVehicleService vehicleService,
             [Service] IHttpContextAccessor httpContextAccessor,
             [Service] ILogger<VehicleQueries> logger,
+            [Service] IAuthenticatedActorResolver actorResolver,
             [GraphQLType(typeof(VehicleFilterInputType))] VehicleFilterInput? filter = null)
         {
             try
             {
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(httpContextAccessor.HttpContext!.User);
+                var actor = await actorResolver.ResolveAsync(httpContextAccessor.HttpContext!.User);
                 return await vehicleService.GetFilteredVehiclesAsync(filter ?? new VehicleFilterInput(), actor);
             }
             catch (UnauthorizedAccessException ex)
@@ -45,6 +46,7 @@ namespace SmartCondoApi.GraphQL.Queries
             [Service] IVehicleService vehicleService,
             [Service] IHttpContextAccessor httpContextAccessor,
             [Service] ILogger<VehicleQueries> logger,
+            [Service] IAuthenticatedActorResolver actorResolver,
             [ID] string id)
         {
             try
@@ -54,7 +56,7 @@ namespace SmartCondoApi.GraphQL.Queries
                     throw new GraphQLException("VehicleID must be numeric");
                 }
 
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(httpContextAccessor.HttpContext!.User);
+                var actor = await actorResolver.ResolveAsync(httpContextAccessor.HttpContext!.User);
                 var vehicle = await vehicleService.GetVehicleByIdAsync(idInt, actor);
                 return vehicle ?? throw new GraphQLException(new ErrorBuilder()
                     .SetMessage("Vehicle not found")

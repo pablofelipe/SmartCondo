@@ -23,6 +23,7 @@ namespace SmartCondoApi.Tests.Helpers
                 { "resident004@aaa.com", "Xx45%123" },
                 { "unknowUserType01@aaa.com", "V6!]Bq3;" },
                 { "resident005@aaa.com", "W8bnw#" },
+                { "resident009@bbb.com", "Ee@789!" },
             };
 
 
@@ -52,17 +53,22 @@ namespace SmartCondoApi.Tests.Helpers
                 condominiumA.TryOccupyUserSlot();
             }
 
+            var condominiumB = new Condominium()
+            {
+                Id = 2,
+                Name = "Condominium B",
+                Address = "Bbb Avenue, 456",
+                Enabled = false,
+                MaxUsers = 5,
+                TowerCount = 1,
+            };
+
+            // Matches UserProfile id 9 (CondominiumId = 2) seeded below.
+            condominiumB.TryOccupyUserSlot();
+
             context.Condominiums.AddRange(
                 condominiumA,
-                new Condominium()
-                {
-                    Id = 2,
-                    Name = "Condominium B",
-                    Address = "Bbb Avenue, 456",
-                    Enabled = false,
-                    MaxUsers = 5,
-                    TowerCount = 1,
-                },
+                condominiumB,
                 new Condominium()
                 {
                     Id = 3,
@@ -215,6 +221,16 @@ namespace SmartCondoApi.Tests.Helpers
                     TowerId = 1,
                     FloorNumber = 1,
                     Apartment = 5
+                },
+                new UserProfile
+                {
+                    Id = 9,
+                    UserTypeId = 3,
+                    Name = "Resident on Disabled Condominium",
+                    Address = "Bbb Avenue, 456",
+                    Phone1 = "9911223344",
+                    RegistrationNumber = "36225836039",
+                    CondominiumId = 2,
                 }
                 );
 
@@ -299,6 +315,13 @@ namespace SmartCondoApi.Tests.Helpers
                         Email = "resident005@aaa.com",
                         Enabled = true,
                         EmailConfirmed = false,
+                    },
+                    new User()
+                    {
+                        Id = 9,
+                        Email = "resident009@bbb.com",
+                        Enabled = true,
+                        EmailConfirmed = true,
                     }
                     }
                 );

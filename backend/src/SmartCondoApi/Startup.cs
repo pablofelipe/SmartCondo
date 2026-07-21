@@ -171,6 +171,7 @@ public class Startup
         services.AddScoped<IVehicleService, VehicleService>();
 
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IAuthenticatedActorResolver, AuthenticatedActorResolver>();
 
         services.AddHttpContextAccessor();
         services.AddMemoryCache();

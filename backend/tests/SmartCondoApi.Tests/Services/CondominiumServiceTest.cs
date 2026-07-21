@@ -62,7 +62,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Get_PlatformOperator_ReturnsAllCondominiums()
         {
-            var actor = new AuthenticatedActor(10, "SystemAdministrator");
+            var actor = new AuthenticatedActor(10, "SystemAdministrator", true, 1, true);
 
             var condos = (await _service.Get(actor)).ToList();
 
@@ -74,7 +74,7 @@ namespace SmartCondoApi.Tests.Services
         {
             // CondominiumAdministrator has no Condominium capability today - Scope restricts, never grants,
             // so even for their own tenant the list stays empty. See ADR-0005.
-            var actor = new AuthenticatedActor(10, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(10, "CondominiumAdministrator", true, 1, true);
 
             var condos = (await _service.Get(actor)).ToList();
 
@@ -84,7 +84,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task GetById_PlatformOperator_SucceedsForAnyTenant()
         {
-            var actor = new AuthenticatedActor(10, "SystemAdministrator");
+            var actor = new AuthenticatedActor(10, "SystemAdministrator", true, 1, true);
 
             var condo = await _service.Get(2, actor);
 
@@ -94,7 +94,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task GetById_NonCapableRoleOwnTenant_Denied()
         {
-            var actor = new AuthenticatedActor(10, "CondominiumAdministrator"); // belongs to Condominium 1
+            var actor = new AuthenticatedActor(10, "CondominiumAdministrator", true, 1, true); // belongs to Condominium 1
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.Get(1, actor));
         }
@@ -102,7 +102,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task GetById_NonCapableRoleOtherTenant_Denied()
         {
-            var actor = new AuthenticatedActor(10, "CondominiumAdministrator"); // belongs to Condominium 1
+            var actor = new AuthenticatedActor(10, "CondominiumAdministrator", true, 1, true); // belongs to Condominium 1
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.Get(2, actor));
         }
@@ -110,7 +110,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task GetById_NotFound_Throws()
         {
-            var actor = new AuthenticatedActor(10, "SystemAdministrator");
+            var actor = new AuthenticatedActor(10, "SystemAdministrator", true, 1, true);
 
             await Assert.ThrowsExceptionAsync<CondominiumNotFoundException>(() => _service.Get(999, actor));
         }
@@ -118,7 +118,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Create_PlatformOperator_Succeeds()
         {
-            var actor = new AuthenticatedActor(10, "SystemAdministrator");
+            var actor = new AuthenticatedActor(10, "SystemAdministrator", true, 1, true);
             var dto = new CondominiumCreateDTO { Name = "New Condo", Address = "New Addr", TowerCount = 1, MaxUsers = 5, Enabled = true };
 
             var created = await _service.Create(dto, actor);
@@ -129,7 +129,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Create_NonCapableRole_Denied()
         {
-            var actor = new AuthenticatedActor(10, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(10, "CondominiumAdministrator", true, 1, true);
             var dto = new CondominiumCreateDTO { Name = "New Condo", Address = "New Addr", TowerCount = 1, MaxUsers = 5, Enabled = true };
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.Create(dto, actor));
@@ -138,7 +138,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Update_PlatformOperator_Succeeds()
         {
-            var actor = new AuthenticatedActor(10, "SystemAdministrator");
+            var actor = new AuthenticatedActor(10, "SystemAdministrator", true, 1, true);
 
             await _service.Update(1, new CondominiumUpdateDTO { Name = "Renamed" }, actor);
 
@@ -149,7 +149,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Update_NonCapableRoleOwnTenant_Denied()
         {
-            var actor = new AuthenticatedActor(10, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(10, "CondominiumAdministrator", true, 1, true);
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.Update(1, new CondominiumUpdateDTO { Name = "Renamed" }, actor));
         }
@@ -157,7 +157,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Delete_PlatformOperator_HardDeletesWhenNoUsers()
         {
-            var actor = new AuthenticatedActor(10, "SystemAdministrator");
+            var actor = new AuthenticatedActor(10, "SystemAdministrator", true, 1, true);
 
             await _service.Delete(3, actor);
 
@@ -168,7 +168,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Delete_PlatformOperator_SoftDeletesWhenUsersExist()
         {
-            var actor = new AuthenticatedActor(10, "SystemAdministrator");
+            var actor = new AuthenticatedActor(10, "SystemAdministrator", true, 1, true);
 
             await _service.Delete(2, actor); // has a seeded actor profile
 
@@ -180,7 +180,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Delete_NonCapableRole_Denied()
         {
-            var actor = new AuthenticatedActor(10, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(10, "CondominiumAdministrator", true, 1, true);
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.Delete(1, actor));
         }
@@ -190,7 +190,7 @@ namespace SmartCondoApi.Tests.Services
         {
             // CondominiumAdministrator has CanViewUsers=true - this is the non-degenerate Scope case,
             // unlike the rest of this controller which only SystemAdministrator can reach today.
-            var actor = new AuthenticatedActor(10, "CondominiumAdministrator"); // belongs to Condominium 1
+            var actor = new AuthenticatedActor(10, "CondominiumAdministrator", true, 1, true); // belongs to Condominium 1
 
             var users = await _service.SearchUsers(1, new UserProfileSearchDTO { Name = "Actor" }, actor);
 
@@ -200,7 +200,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task SearchUsers_CapableRoleOtherTenant_Denied()
         {
-            var actor = new AuthenticatedActor(10, "CondominiumAdministrator"); // belongs to Condominium 1
+            var actor = new AuthenticatedActor(10, "CondominiumAdministrator", true, 1, true); // belongs to Condominium 1
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(
                 () => _service.SearchUsers(2, new UserProfileSearchDTO { Name = "Actor" }, actor));

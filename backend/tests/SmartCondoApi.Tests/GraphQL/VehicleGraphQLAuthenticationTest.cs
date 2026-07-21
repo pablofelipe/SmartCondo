@@ -35,6 +35,7 @@ namespace SmartCondoApi.Tests.GraphQL
                         services.AddDbContext<SmartCondoContext>(options =>
                             options.UseInMemoryDatabase($"graphQLAuthTest_{Guid.NewGuid()}"));
                         services.AddScoped<IVehicleService, VehicleService>();
+                        services.AddScoped<IAuthenticatedActorResolver, AuthenticatedActorResolver>();
                         services.AddRouting();
                         services.AddHttpContextAccessor();
 
@@ -75,6 +76,18 @@ namespace SmartCondoApi.Tests.GraphQL
                     });
                 })
                 .StartAsync();
+
+            // The resolver now requires a real UserProfile/User row to resolve the JWT's subject
+            // into an AuthenticatedActor - BuildValidToken() issues a token for id 1, so it must exist.
+            using (var scope = host.Services.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<SmartCondoContext>();
+
+                context.Users.Add(new User { Id = 1, UserName = "resident@example.com", Email = "resident@example.com", Enabled = true, EmailConfirmed = true });
+                context.UserProfiles.Add(new UserProfile { Id = 1, Name = "Resident", Address = "Addr", Phone1 = "0000000000", RegistrationNumber = "00000000000", UserTypeId = 3 });
+
+                await context.SaveChangesAsync();
+            }
 
             return host.GetTestServer();
         }

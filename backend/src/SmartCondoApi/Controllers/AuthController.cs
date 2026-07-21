@@ -47,6 +47,10 @@ namespace SmartCondoApi.Controllers
             {
                 return Unauthorized(new { ex.Message });
             }
+            catch (CondominiumDisabledException ex)
+            {
+                return Unauthorized(new { ex.Message });
+            }
             catch (UserExpiredException ex)
             {
                 return Unauthorized(new { ex.Message });

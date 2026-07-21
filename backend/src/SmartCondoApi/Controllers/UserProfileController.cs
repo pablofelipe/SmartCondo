@@ -17,7 +17,7 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var actor = await _dependencies.ActorResolver.ResolveAsync(User);
 
                 var userProfileResponseDTO = await _dependencies.UserProfileService.Add(userCreateDTO, actor);
 
@@ -136,7 +136,7 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var actor = await _dependencies.ActorResolver.ResolveAsync(User);
 
                 var userResponseDTO = await _dependencies.UserProfileService.Update(id, updatedUser, actor);
                 return Ok(userResponseDTO);
@@ -175,7 +175,7 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var actor = await _dependencies.ActorResolver.ResolveAsync(User);
 
                 var user = await _dependencies.UserProfileService.Get(id, actor);
 
@@ -203,7 +203,7 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var actor = await _dependencies.ActorResolver.ResolveAsync(User);
 
                 await _dependencies.UserProfileService.Delete(id, actor);
 

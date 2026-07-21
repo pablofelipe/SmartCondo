@@ -9,7 +9,7 @@ namespace SmartCondoApi.Controllers
 {
     [ApiController]
     [Route("api/v{version:apiVersion}/[controller]")]
-    public class TowerController(ITowerService _towerService, ILogger<TowerController> _logger) : ControllerBase
+    public class TowerController(ITowerService _towerService, ILogger<TowerController> _logger, IAuthenticatedActorResolver _actorResolver) : ControllerBase
     {
         //// Obter uma torre por ID
         [HttpGet("{id}")]
@@ -18,7 +18,7 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var actor = await _actorResolver.ResolveAsync(User);
                 var tower = await _towerService.Get(id, actor);
                 return Ok(tower);
             }
@@ -43,7 +43,7 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var actor = await _actorResolver.ResolveAsync(User);
                 var towers = await _towerService.GetByCondominium(condominiumId, actor);
                 return Ok(towers);
             }
@@ -68,7 +68,7 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var actor = await _actorResolver.ResolveAsync(User);
                 var tower = await _towerService.Create(towerDto, actor);
                 return CreatedAtAction(nameof(Get), new { id = tower.Id }, tower);
             }
@@ -97,7 +97,7 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var actor = await _actorResolver.ResolveAsync(User);
                 await _towerService.Update(id, towerDto, actor);
                 return NoContent();
             }
@@ -126,7 +126,7 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var actor = await _actorResolver.ResolveAsync(User);
                 await _towerService.Delete(id, actor);
                 return NoContent();
             }

@@ -72,7 +72,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task GetVehicleByIdAsync_OwnerWithoutViewCapability_ReturnsVehicle()
         {
-            var actor = new AuthenticatedActor(10, "Resident");
+            var actor = new AuthenticatedActor(10, "Resident", true, 1, true);
             var vehicle = await _service.GetVehicleByIdAsync(1, actor);
             Assert.IsNotNull(vehicle);
         }
@@ -80,14 +80,14 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task GetVehicleByIdAsync_NonOwnerWithoutViewCapability_Throws()
         {
-            var actor = new AuthenticatedActor(99, "Resident");
+            var actor = new AuthenticatedActor(99, "Resident", true, 1, true);
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.GetVehicleByIdAsync(1, actor));
         }
 
         [TestMethod]
         public async Task GetVehicleByIdAsync_NonOwnerWithViewCapability_ReturnsVehicle()
         {
-            var actor = new AuthenticatedActor(99, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(99, "CondominiumAdministrator", true, 1, true);
             var vehicle = await _service.GetVehicleByIdAsync(1, actor);
             Assert.IsNotNull(vehicle);
         }
@@ -96,14 +96,14 @@ namespace SmartCondoApi.Tests.Services
         public async Task GetVehicleByIdAsync_AdminFromDifferentTenant_Throws()
         {
             // Actor 4 has CanViewVehicles but belongs to tenant 2; vehicle 1's owner belongs to tenant 1.
-            var actor = new AuthenticatedActor(4, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(4, "CondominiumAdministrator", true, 2, true);
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.GetVehicleByIdAsync(1, actor));
         }
 
         [TestMethod]
         public async Task GetVehicleByIdAsync_NotFound_ReturnsNull()
         {
-            var actor = new AuthenticatedActor(10, "Resident");
+            var actor = new AuthenticatedActor(10, "Resident", true, 1, true);
             var vehicle = await _service.GetVehicleByIdAsync(999, actor);
             Assert.IsNull(vehicle);
         }
@@ -111,7 +111,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task GetFilteredVehiclesAsync_WithoutViewCapability_ReturnsOnlyOwnVehicles()
         {
-            var actor = new AuthenticatedActor(10, "Resident");
+            var actor = new AuthenticatedActor(10, "Resident", true, 1, true);
             var vehicles = (await _service.GetFilteredVehiclesAsync(new VehicleFilterInput(), actor)).ToList();
             Assert.AreEqual(1, vehicles.Count);
             Assert.AreEqual(10, vehicles[0].UserId);
@@ -121,7 +121,7 @@ namespace SmartCondoApi.Tests.Services
         public async Task GetFilteredVehiclesAsync_WithoutViewCapability_IgnoresFilterRequirement()
         {
             // Resident (id=10) has no vehicle matching this plate, but self-service ignores filters entirely.
-            var actor = new AuthenticatedActor(10, "Resident");
+            var actor = new AuthenticatedActor(10, "Resident", true, 1, true);
             var filter = new VehicleFilterInput(LicensePlate: "ZZZ9999");
 
             var vehicles = (await _service.GetFilteredVehiclesAsync(filter, actor)).ToList();
@@ -133,7 +133,7 @@ namespace SmartCondoApi.Tests.Services
         public async Task GetFilteredVehiclesAsync_ScopesToActorTenant_ExcludesOtherTenants()
         {
             // Actor 2 has CanViewVehicles and belongs to tenant 1; vehicle 3's owner (40) belongs to tenant 2.
-            var actor = new AuthenticatedActor(2, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(2, "CondominiumAdministrator", true, 1, true);
             var filter = new VehicleFilterInput(ApartmentNumber: 1);
 
             var vehicles = (await _service.GetFilteredVehiclesAsync(filter, actor)).ToList();
@@ -145,7 +145,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task GetFilteredVehiclesAsync_UnrestrictedScope_SeesEveryTenant()
         {
-            var actor = new AuthenticatedActor(1, "SystemAdministrator");
+            var actor = new AuthenticatedActor(1, "SystemAdministrator", true, null, true);
             var filter = new VehicleFilterInput(ApartmentNumber: 1);
 
             var vehicles = (await _service.GetFilteredVehiclesAsync(filter, actor)).ToList();
@@ -156,7 +156,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task CreateVehicleAsync_ForSelf_Succeeds()
         {
-            var actor = new AuthenticatedActor(30, "Resident");
+            var actor = new AuthenticatedActor(30, "Resident", true, 1, true);
             var vehicle = new Models.Vehicle { UserId = 30, LicensePlate = "CCC3333", Brand = "Ford", Model = "Ka", Color = "Blue", Type = VehicleTypeEnum.Car, Enabled = true };
 
             var created = await _service.CreateVehicleAsync(vehicle, actor);
@@ -167,7 +167,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task CreateVehicleAsync_ForSomeoneElseWithoutCapability_Throws()
         {
-            var actor = new AuthenticatedActor(30, "Resident");
+            var actor = new AuthenticatedActor(30, "Resident", true, 1, true);
             var vehicle = new Models.Vehicle { UserId = 31, LicensePlate = "DDD4444", Brand = "Ford", Model = "Ka", Color = "Blue", Type = VehicleTypeEnum.Car, Enabled = true };
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.CreateVehicleAsync(vehicle, actor));
@@ -176,7 +176,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task CreateVehicleAsync_ForSomeoneElseWithCapability_Succeeds()
         {
-            var actor = new AuthenticatedActor(2, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(2, "CondominiumAdministrator", true, 1, true);
             var vehicle = new Models.Vehicle { UserId = 31, LicensePlate = "EEE5555", Brand = "Ford", Model = "Ka", Color = "Blue", Type = VehicleTypeEnum.Car, Enabled = true };
 
             var created = await _service.CreateVehicleAsync(vehicle, actor);
@@ -188,7 +188,7 @@ namespace SmartCondoApi.Tests.Services
         public async Task CreateVehicleAsync_AdminFromDifferentTenant_Throws()
         {
             // Actor 4 has CanRegisterVehicles but belongs to tenant 2; the target owner (31) belongs to tenant 1.
-            var actor = new AuthenticatedActor(4, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(4, "CondominiumAdministrator", true, 2, true);
             var vehicle = new Models.Vehicle { UserId = 31, LicensePlate = "FFF6666", Brand = "Ford", Model = "Ka", Color = "Blue", Type = VehicleTypeEnum.Car, Enabled = true };
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.CreateVehicleAsync(vehicle, actor));
@@ -197,7 +197,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task UpdateVehicleAsync_OwnerWithoutEditCapability_CannotReassignOwnership()
         {
-            var actor = new AuthenticatedActor(10, "Resident");
+            var actor = new AuthenticatedActor(10, "Resident", true, 1, true);
             var vehicle = new Models.Vehicle { Id = 1, UserId = 999, LicensePlate = "AAA1111-X", Brand = "Fiat", Model = "Uno", Color = "Red", Type = VehicleTypeEnum.Car, Enabled = true };
 
             var updated = await _service.UpdateVehicleAsync(vehicle, actor);
@@ -209,7 +209,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task UpdateVehicleAsync_NonOwnerWithoutCapability_Throws()
         {
-            var actor = new AuthenticatedActor(99, "Resident");
+            var actor = new AuthenticatedActor(99, "Resident", true, 1, true);
             var vehicle = new Models.Vehicle { Id = 1, UserId = 10, LicensePlate = "AAA1111-X", Brand = "Fiat", Model = "Uno", Color = "Red", Type = VehicleTypeEnum.Car, Enabled = true };
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.UpdateVehicleAsync(vehicle, actor));
@@ -218,7 +218,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task UpdateVehicleAsync_AdminWithCapability_CanReassignOwnership()
         {
-            var actor = new AuthenticatedActor(2, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(2, "CondominiumAdministrator", true, 1, true);
             var vehicle = new Models.Vehicle { Id = 1, UserId = 999, LicensePlate = "AAA1111-X", Brand = "Fiat", Model = "Uno", Color = "Red", Type = VehicleTypeEnum.Car, Enabled = true };
 
             var updated = await _service.UpdateVehicleAsync(vehicle, actor);
@@ -231,7 +231,7 @@ namespace SmartCondoApi.Tests.Services
         {
             // Actor 2 has authority over vehicle 1's current tenant (1), but the new owner (40) belongs
             // to tenant 2 - reassignment is itself an administrative act on the destination tenant.
-            var actor = new AuthenticatedActor(2, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(2, "CondominiumAdministrator", true, 1, true);
             var vehicle = new Models.Vehicle { Id = 1, UserId = 40, LicensePlate = "AAA1111-X", Brand = "Fiat", Model = "Uno", Color = "Red", Type = VehicleTypeEnum.Car, Enabled = true };
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.UpdateVehicleAsync(vehicle, actor));
@@ -241,7 +241,7 @@ namespace SmartCondoApi.Tests.Services
         public async Task UpdateVehicleAsync_AdminFromDifferentTenant_Throws()
         {
             // Actor 4 has CanEditVehicles but belongs to tenant 2; vehicle 1's owner belongs to tenant 1.
-            var actor = new AuthenticatedActor(4, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(4, "CondominiumAdministrator", true, 2, true);
             var vehicle = new Models.Vehicle { Id = 1, UserId = 10, LicensePlate = "AAA1111-X", Brand = "Fiat", Model = "Uno", Color = "Red", Type = VehicleTypeEnum.Car, Enabled = true };
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.UpdateVehicleAsync(vehicle, actor));
@@ -250,7 +250,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task UpdateVehicleAsync_NotFound_ReturnsNull()
         {
-            var actor = new AuthenticatedActor(10, "Resident");
+            var actor = new AuthenticatedActor(10, "Resident", true, 1, true);
             var vehicle = new Models.Vehicle { Id = 999, UserId = 10, LicensePlate = "X", Brand = "X", Model = "X", Color = "X", Type = VehicleTypeEnum.Car, Enabled = true };
 
             var updated = await _service.UpdateVehicleAsync(vehicle, actor);
@@ -263,7 +263,7 @@ namespace SmartCondoApi.Tests.Services
         {
             // CleaningManager: CanRegisterUsers=true -> CanEditVehicles=true, but CanViewUsers=false -> CanViewVehicles=false.
             // Edit authority must not depend on view authority.
-            var actor = new AuthenticatedActor(99, "CleaningManager");
+            var actor = new AuthenticatedActor(99, "CleaningManager", true, 1, true);
             var vehicle = new Models.Vehicle { Id = 2, UserId = 20, LicensePlate = "BBB2222-X", Brand = "VW", Model = "Gol", Color = "Silver", Type = VehicleTypeEnum.Car, Enabled = true };
 
             var updated = await _service.UpdateVehicleAsync(vehicle, actor);
@@ -274,7 +274,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task DeleteVehicleAsync_Owner_Succeeds()
         {
-            var actor = new AuthenticatedActor(10, "Resident");
+            var actor = new AuthenticatedActor(10, "Resident", true, 1, true);
 
             var deleted = await _service.DeleteVehicleAsync(1, actor);
 
@@ -284,7 +284,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task DeleteVehicleAsync_NonOwnerWithoutCapability_Throws()
         {
-            var actor = new AuthenticatedActor(99, "Resident");
+            var actor = new AuthenticatedActor(99, "Resident", true, 1, true);
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.DeleteVehicleAsync(1, actor));
         }
@@ -292,7 +292,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task DeleteVehicleAsync_NonOwnerWithCapability_Succeeds()
         {
-            var actor = new AuthenticatedActor(2, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(2, "CondominiumAdministrator", true, 1, true);
 
             var deleted = await _service.DeleteVehicleAsync(2, actor);
 
@@ -303,14 +303,14 @@ namespace SmartCondoApi.Tests.Services
         public async Task DeleteVehicleAsync_AdminFromDifferentTenant_Throws()
         {
             // Actor 4 has CanEditVehicles but belongs to tenant 2; vehicle 1's owner belongs to tenant 1.
-            var actor = new AuthenticatedActor(4, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(4, "CondominiumAdministrator", true, 2, true);
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.DeleteVehicleAsync(1, actor));
         }
 
         [TestMethod]
         public async Task DeleteVehicleAsync_NotFound_ReturnsFalse()
         {
-            var actor = new AuthenticatedActor(10, "Resident");
+            var actor = new AuthenticatedActor(10, "Resident", true, 1, true);
 
             var deleted = await _service.DeleteVehicleAsync(999, actor);
 

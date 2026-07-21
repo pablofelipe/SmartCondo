@@ -13,6 +13,7 @@ namespace SmartCondoApi.GraphQL.Mutations
             [Service] IVehicleService vehicleService,
             [Service] IHttpContextAccessor httpContextAccessor,
             [Service] ILogger<VehicleMutations> logger,
+            [Service] IAuthenticatedActorResolver actorResolver,
             VehicleInput input)
         {
             try
@@ -22,7 +23,7 @@ namespace SmartCondoApi.GraphQL.Mutations
                     throw new GraphQLException("UserID is required");
                 }
 
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(httpContextAccessor.HttpContext!.User);
+                var actor = await actorResolver.ResolveAsync(httpContextAccessor.HttpContext!.User);
 
                 var vehicle = new Vehicle
                 {
@@ -64,6 +65,7 @@ namespace SmartCondoApi.GraphQL.Mutations
             [Service] IVehicleService vehicleService,
             [Service] IHttpContextAccessor httpContextAccessor,
             [Service] ILogger<VehicleMutations> logger,
+            [Service] IAuthenticatedActorResolver actorResolver,
             [ID] string id,
             VehicleInput input)
         {
@@ -79,7 +81,7 @@ namespace SmartCondoApi.GraphQL.Mutations
                     throw new GraphQLException("UserID is required");
                 }
 
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(httpContextAccessor.HttpContext!.User);
+                var actor = await actorResolver.ResolveAsync(httpContextAccessor.HttpContext!.User);
 
                 var vehicle = new Vehicle
                 {
@@ -132,6 +134,7 @@ namespace SmartCondoApi.GraphQL.Mutations
             [Service] IVehicleService vehicleService,
             [Service] IHttpContextAccessor httpContextAccessor,
             [Service] ILogger<VehicleMutations> logger,
+            [Service] IAuthenticatedActorResolver actorResolver,
             [ID] string id)
         {
             try
@@ -141,7 +144,7 @@ namespace SmartCondoApi.GraphQL.Mutations
                     throw new GraphQLException("VehicleID must be numeric");
                 }
 
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(httpContextAccessor.HttpContext!.User);
+                var actor = await actorResolver.ResolveAsync(httpContextAccessor.HttpContext!.User);
                 var deleted = await vehicleService.DeleteVehicleAsync(idInt, actor);
 
                 if (!deleted)

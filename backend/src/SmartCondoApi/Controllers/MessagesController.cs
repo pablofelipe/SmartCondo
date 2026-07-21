@@ -11,7 +11,7 @@ namespace SmartCondoApi.Controllers
     [ApiController]
     [Route("api/v{version:apiVersion}/[controller]")]
     [Authorize]
-    public class MessagesController(IMessageService messageService, INotificationService notificationService, ILogger<MessagesController> _logger) : ControllerBase
+    public class MessagesController(IMessageService messageService, INotificationService notificationService, ILogger<MessagesController> _logger, IAuthenticatedActorResolver _actorResolver) : ControllerBase
     {
         private readonly IMessageService _messageService = messageService;
         private readonly INotificationService _notificationService = notificationService;
@@ -19,7 +19,7 @@ namespace SmartCondoApi.Controllers
         [HttpPost]
         public async Task<ActionResult> SendMessage([FromBody] MessageCreateDto messageDto)
         {
-            var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+            var actor = await _actorResolver.ResolveAsync(User);
 
             try
             {
@@ -52,7 +52,7 @@ namespace SmartCondoApi.Controllers
         [HttpGet("received")]
         public async Task<ActionResult> GetReceivedMessages()
         {
-            var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+            var actor = await _actorResolver.ResolveAsync(User);
 
             var messages = await _messageService.GetReceivedMessagesAsync(actor);
             return Ok(messages);
@@ -61,7 +61,7 @@ namespace SmartCondoApi.Controllers
         [HttpGet("sent")]
         public async Task<ActionResult> GetSentMessages()
         {
-            var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+            var actor = await _actorResolver.ResolveAsync(User);
 
             var messages = await _messageService.GetSentMessagesAsync(actor);
             return Ok(messages);
@@ -70,7 +70,7 @@ namespace SmartCondoApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult> GetMessage(long id)
         {
-            var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+            var actor = await _actorResolver.ResolveAsync(User);
 
             var message = await _messageService.GetMessageAsync(id, actor);
 
@@ -85,7 +85,7 @@ namespace SmartCondoApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> MarkAsRead(long id)
         {
-            var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+            var actor = await _actorResolver.ResolveAsync(User);
 
             try
             {

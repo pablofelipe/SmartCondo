@@ -20,7 +20,7 @@ namespace SmartCondoApi.Services.Condominium
                 throw new TowerNotFoundException($"Tower with ID {id} not found");
             }
 
-            await EnsureAuthorizedAsync(actor, tower.CondominiumId, p => p.CanViewCondominiums, "view");
+            EnsureAuthorized(actor, tower.CondominiumId, p => p.CanViewCondominiums, "view");
 
             return MapToDto(tower);
         }
@@ -33,7 +33,7 @@ namespace SmartCondoApi.Services.Condominium
                 throw new CondominiumNotFoundException($"Condominium with ID {condominiumId} not found");
             }
 
-            await EnsureAuthorizedAsync(actor, condominiumId, p => p.CanViewCondominiums, "view towers in");
+            EnsureAuthorized(actor, condominiumId, p => p.CanViewCondominiums, "view towers in");
 
             var towers = await _context.Towers
                 .Where(t => t.CondominiumId == condominiumId)
@@ -60,7 +60,7 @@ namespace SmartCondoApi.Services.Condominium
                 throw new CondominiumNotFoundException($"Condominium with ID {towerDto.CondominiumId} not found");
             }
 
-            await EnsureAuthorizedAsync(actor, towerDto.CondominiumId, p => p.CanEditCondominiums, "register a tower in");
+            EnsureAuthorized(actor, towerDto.CondominiumId, p => p.CanEditCondominiums, "register a tower in");
 
             var tower = new Tower
             {
@@ -84,7 +84,7 @@ namespace SmartCondoApi.Services.Condominium
                 throw new TowerNotFoundException($"Tower with ID {id} not found");
             }
 
-            await EnsureAuthorizedAsync(actor, tower.CondominiumId, p => p.CanEditCondominiums, "edit");
+            EnsureAuthorized(actor, tower.CondominiumId, p => p.CanEditCondominiums, "edit");
 
             if (towerDto.Number.HasValue)
             {
@@ -117,7 +117,7 @@ namespace SmartCondoApi.Services.Condominium
                 throw new TowerNotFoundException($"Tower with ID {id} not found");
             }
 
-            await EnsureAuthorizedAsync(actor, tower.CondominiumId, p => p.CanEditCondominiums, "delete");
+            EnsureAuthorized(actor, tower.CondominiumId, p => p.CanEditCondominiums, "delete");
 
             // Check whether any users are associated with this tower
             var hasUsers = await _context.UserProfiles.AnyAsync(u => u.TowerId == id);
@@ -130,9 +130,9 @@ namespace SmartCondoApi.Services.Condominium
             await _context.SaveChangesAsync();
         }
 
-        private async Task EnsureAuthorizedAsync(AuthenticatedActor actor, int resourceCondominiumId, Func<UserPermissionsDTO, bool> hasCapability, string action)
+        private void EnsureAuthorized(AuthenticatedActor actor, int resourceCondominiumId, Func<UserPermissionsDTO, bool> hasCapability, string action)
         {
-            var actorTenantId = await _context.GetActorCondominiumIdAsync(actor.Id);
+            var actorTenantId = actor.CondominiumId;
 
             if (!ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, resourceCondominiumId, hasCapability))
             {

@@ -10,13 +10,13 @@ namespace SmartCondoApi.Controllers
     [ApiController]
     [Route("api/v{version:apiVersion}/[controller]")]
     [Authorize]
-    public class CondominiumController(ICondominiumService _condominiumService, ILogger<CondominiumController> _logger) : ControllerBase
+    public class CondominiumController(ICondominiumService _condominiumService, ILogger<CondominiumController> _logger, IAuthenticatedActorResolver _actorResolver) : ControllerBase
     {
         [HttpGet]
         [Authorize]
         public async Task<IEnumerable<CondominiumResponseDTO>> Get()
         {
-            var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+            var actor = await _actorResolver.ResolveAsync(User);
             return await _condominiumService.Get(actor);
         }
 
@@ -27,7 +27,7 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var actor = await _actorResolver.ResolveAsync(User);
                 var condo = await _condominiumService.Get(id, actor);
 
                 return Ok(condo);
@@ -55,7 +55,7 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var actor = await _actorResolver.ResolveAsync(User);
                 var users = await _condominiumService.SearchUsers(condominiumId, searchDto, actor);
 
                 return Ok(users);
@@ -77,7 +77,7 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var actor = await _actorResolver.ResolveAsync(User);
                 var condos = await _condominiumService.Search(searchDto, actor);
                 return Ok(condos);
             }
@@ -98,7 +98,7 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var actor = await _actorResolver.ResolveAsync(User);
                 var condo = await _condominiumService.Create(condoDto, actor);
                 return CreatedAtAction(nameof(Get), new { id = condo.Id }, condo);
             }
@@ -123,7 +123,7 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var actor = await _actorResolver.ResolveAsync(User);
                 await _condominiumService.Update(id, condoDto, actor);
                 return NoContent();
             }
@@ -152,7 +152,7 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var actor = await _actorResolver.ResolveAsync(User);
                 await _condominiumService.Delete(id, actor);
                 return NoContent();
             }

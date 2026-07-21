@@ -63,7 +63,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Get_PlatformOperator_SucceedsForAnyTenant()
         {
-            var actor = new AuthenticatedActor(10, "SystemAdministrator");
+            var actor = new AuthenticatedActor(10, "SystemAdministrator", true, 1, true);
 
             var tower = await _service.Get(2, actor);
 
@@ -75,7 +75,7 @@ namespace SmartCondoApi.Tests.Services
         {
             // Tower has no capability of its own - it derives from Condominium capability,
             // which CondominiumAdministrator does not hold today (same reasoning as CondominiumServiceTest).
-            var actor = new AuthenticatedActor(10, "CondominiumAdministrator"); // belongs to Condominium 1, same as Tower 1
+            var actor = new AuthenticatedActor(10, "CondominiumAdministrator", true, 1, true); // belongs to Condominium 1, same as Tower 1
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.Get(1, actor));
         }
@@ -83,7 +83,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Get_NonCapableRoleOtherTenant_Denied()
         {
-            var actor = new AuthenticatedActor(10, "CondominiumAdministrator"); // belongs to Condominium 1
+            var actor = new AuthenticatedActor(10, "CondominiumAdministrator", true, 1, true); // belongs to Condominium 1
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.Get(2, actor));
         }
@@ -91,7 +91,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Get_NotFound_Throws()
         {
-            var actor = new AuthenticatedActor(10, "SystemAdministrator");
+            var actor = new AuthenticatedActor(10, "SystemAdministrator", true, 1, true);
 
             await Assert.ThrowsExceptionAsync<TowerNotFoundException>(() => _service.Get(999, actor));
         }
@@ -99,7 +99,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task GetByCondominium_PlatformOperator_Succeeds()
         {
-            var actor = new AuthenticatedActor(10, "SystemAdministrator");
+            var actor = new AuthenticatedActor(10, "SystemAdministrator", true, 1, true);
 
             var towers = await _service.GetByCondominium(2, actor);
 
@@ -109,7 +109,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task GetByCondominium_NonCapableRoleOtherTenant_Denied()
         {
-            var actor = new AuthenticatedActor(10, "CondominiumAdministrator"); // belongs to Condominium 1
+            var actor = new AuthenticatedActor(10, "CondominiumAdministrator", true, 1, true); // belongs to Condominium 1
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.GetByCondominium(2, actor));
         }
@@ -117,7 +117,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Create_PlatformOperator_Succeeds()
         {
-            var actor = new AuthenticatedActor(10, "SystemAdministrator");
+            var actor = new AuthenticatedActor(10, "SystemAdministrator", true, 1, true);
             var dto = new TowerCreateDTO { Number = 2, Name = "Tower A2", CondominiumId = 1, FloorCount = 3 };
 
             var created = await _service.Create(dto, actor);
@@ -128,7 +128,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Create_NonCapableRole_Denied()
         {
-            var actor = new AuthenticatedActor(10, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(10, "CondominiumAdministrator", true, 1, true);
             var dto = new TowerCreateDTO { Number = 2, Name = "Tower A2", CondominiumId = 1, FloorCount = 3 };
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.Create(dto, actor));
@@ -137,7 +137,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Update_PlatformOperator_Succeeds()
         {
-            var actor = new AuthenticatedActor(10, "SystemAdministrator");
+            var actor = new AuthenticatedActor(10, "SystemAdministrator", true, 1, true);
 
             await _service.Update(1, new TowerUpdateDTO { Name = "Renamed Tower" }, actor);
 
@@ -148,7 +148,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Update_NonCapableRoleOwnTenant_Denied()
         {
-            var actor = new AuthenticatedActor(10, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(10, "CondominiumAdministrator", true, 1, true);
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.Update(1, new TowerUpdateDTO { Name = "Renamed Tower" }, actor));
         }
@@ -156,7 +156,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Delete_PlatformOperator_Succeeds()
         {
-            var actor = new AuthenticatedActor(10, "SystemAdministrator");
+            var actor = new AuthenticatedActor(10, "SystemAdministrator", true, 1, true);
 
             await _service.Delete(2, actor);
 
@@ -167,7 +167,7 @@ namespace SmartCondoApi.Tests.Services
         [TestMethod]
         public async Task Delete_NonCapableRole_Denied()
         {
-            var actor = new AuthenticatedActor(10, "CondominiumAdministrator");
+            var actor = new AuthenticatedActor(10, "CondominiumAdministrator", true, 1, true);
 
             await Assert.ThrowsExceptionAsync<UnauthorizedAccessException>(() => _service.Delete(1, actor));
         }

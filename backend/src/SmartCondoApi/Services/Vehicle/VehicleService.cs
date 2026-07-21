@@ -12,7 +12,7 @@ namespace SmartCondoApi.Services.Vehicle
         public async Task<Models.Vehicle> CreateVehicleAsync(Models.Vehicle vehicle, AuthenticatedActor actor)
         {
             var isSelf = actor.Id == vehicle.UserId;
-            var actorTenantId = await _context.GetActorCondominiumIdAsync(actor.Id);
+            var actorTenantId = actor.CondominiumId;
             var ownerTenantId = await _context.GetActorCondominiumIdAsync(vehicle.UserId);
             var hasAdminAuthority = ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, ownerTenantId, p => p.CanRegisterVehicles);
 
@@ -35,7 +35,7 @@ namespace SmartCondoApi.Services.Vehicle
             }
 
             var isSelf = actor.Id == vehicle.UserId;
-            var actorTenantId = await _context.GetActorCondominiumIdAsync(actor.Id);
+            var actorTenantId = actor.CondominiumId;
             var hasAdminAuthority = ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, vehicle.User.CondominiumId, p => p.CanEditVehicles);
 
             if (!isSelf && !hasAdminAuthority)
@@ -83,7 +83,7 @@ namespace SmartCondoApi.Services.Vehicle
 
             if (!permissions.CanManageAllCondominiums)
             {
-                var actorTenantId = await _context.GetActorCondominiumIdAsync(actor.Id);
+                var actorTenantId = actor.CondominiumId;
                 query = query.Where(v => v.User.CondominiumId == actorTenantId);
             }
 
@@ -120,7 +120,7 @@ namespace SmartCondoApi.Services.Vehicle
             }
 
             var isSelf = actor.Id == vehicle.UserId;
-            var actorTenantId = await _context.GetActorCondominiumIdAsync(actor.Id);
+            var actorTenantId = actor.CondominiumId;
             var hasAdminAuthority = ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, vehicle.User.CondominiumId, p => p.CanViewVehicles);
 
             if (!isSelf && !hasAdminAuthority)
@@ -140,7 +140,7 @@ namespace SmartCondoApi.Services.Vehicle
             }
 
             var isSelf = actor.Id == existing.UserId;
-            var actorTenantId = await _context.GetActorCondominiumIdAsync(actor.Id);
+            var actorTenantId = actor.CondominiumId;
             var hasAdminAuthority = ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, existing.User.CondominiumId, p => p.CanEditVehicles);
 
             if (!isSelf && !hasAdminAuthority)

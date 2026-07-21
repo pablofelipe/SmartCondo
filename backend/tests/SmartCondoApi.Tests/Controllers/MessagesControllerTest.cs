@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using SmartCondoApi.Controllers;
 using SmartCondoApi.Dto;
+using SmartCondoApi.Infra;
 using System.Security.Claims;
 
 namespace SmartCondoApi.Tests.Controllers
@@ -27,7 +28,7 @@ namespace SmartCondoApi.Tests.Controllers
         {
             var loggerMock = new Mock<ILogger<MessagesController>>();
 
-            MessagesController _controller = new(_messageService, _notificationService, loggerMock.Object)
+            MessagesController _controller = new(_messageService, _notificationService, loggerMock.Object, new AuthenticatedActorResolver(_context))
             {
                 ControllerContext = new ControllerContext
                 {
@@ -72,7 +73,7 @@ namespace SmartCondoApi.Tests.Controllers
         {
             var loggerMock = new Mock<ILogger<MessagesController>>();
 
-            MessagesController controller = new(_messageService, _notificationService, loggerMock.Object)
+            MessagesController controller = new(_messageService, _notificationService, loggerMock.Object, new AuthenticatedActorResolver(_context))
             {
                 ControllerContext = new ControllerContext
                 {
