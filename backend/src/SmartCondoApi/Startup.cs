@@ -245,7 +245,7 @@ public class Startup
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();
-            endpoints.MapGraphQL();
+            GraphQL.GraphQLEndpoints.Map(endpoints);
         });
 
     }
