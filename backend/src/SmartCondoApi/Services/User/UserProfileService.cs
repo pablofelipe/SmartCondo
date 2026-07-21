@@ -67,19 +67,18 @@ namespace SmartCondoApi.Services.User
                     throw new UnauthorizedAccessException("You are not authorized to register users in this condominium");
                 }
 
-                var count = (from profiles in context.UserProfiles
-                             join users in context.Users on profiles.Id equals users.Id
-                             where users.Enabled == true && profiles.CondominiumId == userCreateDTO.CondominiumId
-                             select new
-                             {
-                                 User = profiles,
-                                 Login = users
-                             }).Count();
-
-                if (count > condo.MaxUsers - 1)
+                // A slot is occupied at registration, not at e-mail confirmation - see the authorization
+                // evolution notes for Step 5. This check reflects whatever was last read into `condo`; the
+                // actual guarantee against a concurrent registration racing past MaxUsers comes from
+                // OccupiedUserSlots being a concurrency token (see SmartCondoContext.OnModelCreating) - the
+                // save below fails with DbUpdateConcurrencyException if another registration committed first,
+                // which is translated back into the same exception this early check throws.
+                if (condo.OccupiedUserSlots >= condo.MaxUsers)
                 {
                     throw new UsersExceedException("O número máximo de usuários permitidos para este condomínio foi atingido. Entre em contato com o administrador para mais informações.");
                 }
+
+                condo.OccupiedUserSlots += 1;
 
                 await ResidentValidations(userCreateDTO, userTypes, condo);
 
@@ -116,8 +115,15 @@ namespace SmartCondoApi.Services.User
 
             await context.UserProfiles.AddAsync(userProfile);
             await context.Users.AddAsync(user);
-            await context.SaveChangesAsync();
 
+            try
+            {
+                await context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new UsersExceedException("O número máximo de usuários permitidos para este condomínio foi atingido. Entre em contato com o administrador para mais informações.");
+            }
 
             await _dependencies.UserManager.UpdateSecurityStampAsync(user);
             await _dependencies.UserManager.UpdateNormalizedEmailAsync(user);
@@ -290,6 +296,22 @@ namespace SmartCondoApi.Services.User
                 throw new UnauthorizedAccessException("Only an administrator can change housing assignment");
             }
 
+            var originCondominiumId = userProfile.CondominiumId;
+            var isCrossTenantMove = userUpdateDTO.CondominiumId.HasValue && userUpdateDTO.CondominiumId.Value != originCondominiumId;
+
+            if (isCrossTenantMove)
+            {
+                // Moving a resident is itself an administrative act on the destination tenant, not just the
+                // origin one - without this, an administrator of Condominium A could move someone into any
+                // other condominium in the system, regardless of having any authority over it.
+                var hasAdminAuthorityOverDestination = ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, userUpdateDTO.CondominiumId, p => p.CanEditUsers);
+
+                if (!hasAdminAuthorityOverDestination)
+                {
+                    throw new UnauthorizedAccessException("You are not authorized to move users into this condominium");
+                }
+            }
+
             if (userUpdateDTO.Name != null) userProfile.Name = userUpdateDTO.Name;
             if (userUpdateDTO.Address != null) userProfile.Address = userUpdateDTO.Address;
 
@@ -317,7 +339,45 @@ namespace SmartCondoApi.Services.User
                 }
             }
 
-            await context.SaveChangesAsync();
+            if (isCrossTenantMove)
+            {
+                var destinationCondo = await context.Condominiums.FindAsync(userUpdateDTO.CondominiumId!.Value);
+
+                if (destinationCondo == null)
+                {
+                    throw new ArgumentException($"Condominio {userUpdateDTO.CondominiumId} não encontrado");
+                }
+
+                if (destinationCondo.OccupiedUserSlots >= destinationCondo.MaxUsers)
+                {
+                    throw new UsersExceedException("O número máximo de usuários permitidos para o condomínio de destino foi atingido.");
+                }
+
+                destinationCondo.OccupiedUserSlots += 1;
+
+                if (originCondominiumId.HasValue)
+                {
+                    var originCondo = await context.Condominiums.FindAsync(originCondominiumId.Value);
+
+                    if (originCondo != null && originCondo.OccupiedUserSlots > 0)
+                    {
+                        originCondo.OccupiedUserSlots -= 1;
+                    }
+                }
+            }
+
+            // Both condominium counters (when a cross-tenant move touches them) and the profile itself save
+            // together - OccupiedUserSlots being a concurrency token means a race with another registration or
+            // move on either condominium surfaces here as DbUpdateConcurrencyException, not as a silently
+            // wrong count.
+            try
+            {
+                await context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new UsersExceedException("O número máximo de usuários permitidos para o condomínio de destino foi atingido.");
+            }
 
             return new UserProfileResponseDTO()
             {
@@ -411,6 +471,33 @@ namespace SmartCondoApi.Services.User
             }
 
             await _dependencies.Context.SaveChangesAsync();
+
+            // A slot is released on removal, independent of Enabled (which now only tracks e-mail
+            // confirmation, never occupancy - see the Add/Update reservations). The floor guard keeps the
+            // counter from going negative if this profile's slot was already released by an earlier call; it
+            // does not by itself make repeated calls fully idempotent (see Step 5 notes). Kept as its own
+            // save, separate from the one above: if a concurrent change to the same condominium makes this
+            // release race (DbUpdateConcurrencyException), the profile is already disabled/removed either
+            // way, and leaving the slot count slightly high until the next successful write touches it is the
+            // safe direction - so that failure is logged, not rethrown.
+            if (userProfile.CondominiumId.HasValue)
+            {
+                var condo = await _dependencies.Context.Condominiums.FindAsync(userProfile.CondominiumId.Value);
+
+                if (condo != null && condo.OccupiedUserSlots > 0)
+                {
+                    condo.OccupiedUserSlots -= 1;
+
+                    try
+                    {
+                        await _dependencies.Context.SaveChangesAsync();
+                    }
+                    catch (DbUpdateConcurrencyException)
+                    {
+                        _logger.LogWarning("Could not release a user slot for condominium {CondominiumId} due to a concurrent update", userProfile.CondominiumId);
+                    }
+                }
+            }
         }
     }
 }

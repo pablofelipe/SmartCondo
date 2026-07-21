@@ -111,6 +111,13 @@ namespace SmartCondoApi.Models
                 .WithOne(u => u.Condominium)
                 .HasForeignKey(u => u.CondominiumId);
 
+            // Guards the MaxUsers invariant against concurrent registrations/moves: a save that would
+            // overwrite a slot count someone else already changed fails with DbUpdateConcurrencyException
+            // instead of silently allowing the condominium to exceed its capacity.
+            modelBuilder.Entity<Condominium>()
+                .Property(c => c.OccupiedUserSlots)
+                .IsConcurrencyToken();
+
 
             modelBuilder.Entity<Vehicle>()
                 .Property(u => u.Id)

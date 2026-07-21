@@ -10,6 +10,7 @@ namespace SmartCondoApi.Models
         public int TowerCount { get; set; }
         public bool Enabled { get; set; }
         public int MaxUsers { get; set; }
+        public int OccupiedUserSlots { get; set; }
 
         [JsonIgnore]
         public ICollection<Tower> Towers { get; set; }

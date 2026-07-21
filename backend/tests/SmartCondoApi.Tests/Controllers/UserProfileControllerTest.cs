@@ -277,6 +277,38 @@ namespace SmartCondoApi.Tests.Controllers
         }
 
         [TestMethod]
+        public async Task UpdateUserMovesOccupiedSlotBetweenCondominiumsOnCrossTenantMove()
+        {
+            Console.WriteLine("UpdateUserMovesOccupiedSlotBetweenCondominiumsOnCrossTenantMove begin");
+
+            var userProfileController = LoadUserProfileController("SystemAdministrator", 1);
+
+            var result = await userProfileController.UpdateUser(3, new UserProfileUpdateDTO { CondominiumId = 3 });
+
+            SuccessAssert(result);
+
+            var originCondo = await _context.Condominiums.FindAsync(1);
+            var destinationCondo = await _context.Condominiums.FindAsync(3);
+
+            Assert.AreEqual(5, originCondo!.OccupiedUserSlots);
+            Assert.AreEqual(1, destinationCondo!.OccupiedUserSlots);
+            Console.WriteLine("UpdateUserMovesOccupiedSlotBetweenCondominiumsOnCrossTenantMove: done");
+        }
+
+        [TestMethod]
+        public async Task UpdateUserForbiddenWhenMovingIntoCondominiumOutsideCallerAuthority()
+        {
+            Console.WriteLine("UpdateUserForbiddenWhenMovingIntoCondominiumOutsideCallerAuthority begin");
+
+            var userProfileController = LoadUserProfileController("CondominiumAdministrator", 2); // belongs to Condominium 1
+
+            var result = await userProfileController.UpdateUser(3, new UserProfileUpdateDTO { CondominiumId = 3 });
+
+            var forbiddenResult = ForbiddenAssert(result, "not authorized to move users into this condominium");
+            Console.WriteLine("UpdateUserForbiddenWhenMovingIntoCondominiumOutsideCallerAuthority: " + forbiddenResult!.Value);
+        }
+
+        [TestMethod]
         public async Task DeleteOwnProfileForbiddenSelfServiceNotAllowed()
         {
             Console.WriteLine("DeleteOwnProfileForbiddenSelfServiceNotAllowed begin");
@@ -299,6 +331,9 @@ namespace SmartCondoApi.Tests.Controllers
             var result = await userProfileController.Delete(3);
 
             Assert.IsInstanceOfType(result, typeof(OkResult));
+
+            var condo = await _context.Condominiums.FindAsync(1);
+            Assert.AreEqual(5, condo!.OccupiedUserSlots);
             Console.WriteLine("DeleteProfileSuccessWithAdminCapability: done");
         }
 
@@ -406,6 +441,43 @@ namespace SmartCondoApi.Tests.Controllers
 
             var result = await PerformForbiddenAddUserTest(fakeUserCreateDTO, "CondominiumAdministrator", "not authorized to register users in this condominium", callerId: 2);
             Console.WriteLine("AddUserForbiddenWhenTargetCondominiumOutsideCallerScope: " + result.Value);
+        }
+
+        [TestMethod]
+        public async Task AddUserFailsWhenAConcurrentRegistrationAlreadyFilledTheCondominium()
+        {
+            Console.WriteLine("AddUserFailsWhenAConcurrentRegistrationAlreadyFilledTheCondominium begin");
+
+            // Simulates a registration racing another one that has already committed, without needing two
+            // real contexts and threads: force the tracked Condominium's known "original" occupancy to a
+            // value that no longer matches what is actually stored, the same way EF Core's own change
+            // tracker would see it after a concurrent write. The upcoming save must then fail on that
+            // mismatch instead of silently letting the condominium exceed MaxUsers.
+            var condo = await _context.Condominiums.FindAsync(1);
+            _context.Entry(condo!).Property(c => c.OccupiedUserSlots).OriginalValue = condo!.OccupiedUserSlots + 1;
+
+            var fakeUserCreateDTO = new UserProfileCreateDTO
+            {
+                Name = "Fake User",
+                Address = "123 Fake Street",
+                Phone1 = "7777777777",
+                UserTypeId = 3, // Resident
+                RegistrationNumber = "70123456088",
+                CondominiumId = 1,
+                TowerId = 1,
+                FloorId = 1,
+                Apartment = 301,
+                ParkingSpaceNumber = 50,
+                User = new UserCreateDTO
+                {
+                    Email = "racecondition@example.com",
+                    Password = "Aa1!aaaa",
+                    Enabled = true
+                }
+            };
+
+            var result = await PerformUnauthorizedAddUserTest(fakeUserCreateDTO, "O número máximo de usuários permitidos para este condomínio foi atingido");
+            Console.WriteLine("AddUserFailsWhenAConcurrentRegistrationAlreadyFilledTheCondominium: " + result.Value);
         }
 
         private async Task<BadRequestObjectResult> PerformBadRequestAddUserTest(UserProfileCreateDTO userCreateDTO, string message)

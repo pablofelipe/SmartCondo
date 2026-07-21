@@ -43,6 +43,10 @@ namespace SmartCondoApi.Tests.Helpers
                     Enabled = true,
                     MaxUsers = 10,
                     TowerCount = 2,
+                    // Matches the six UserProfiles seeded below with CondominiumId = 1 (ids 2, 3, 4, 6, 7, 8) -
+                    // OccupiedUserSlots must reflect real occupancy, the same way the production migration
+                    // backfills it, or the quota check would think this condominium has more room than it does.
+                    OccupiedUserSlots = 6,
                 },
                 new Condominium()
                 {
