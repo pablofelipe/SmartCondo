@@ -34,20 +34,26 @@ namespace SmartCondoApi.Tests.Helpers
 
             var context = new SmartCondoContext(options);
 
+            var condominiumA = new Condominium()
+            {
+                Id = 1,
+                Name = "Condominium A",
+                Address = "Aaa Avenue, 123",
+                Enabled = true,
+                MaxUsers = 10,
+                TowerCount = 2,
+            };
+
+            // Matches the six UserProfiles seeded below with CondominiumId = 1 (ids 2, 3, 4, 6, 7, 8) -
+            // OccupiedUserSlots must reflect real occupancy, the same way the production migration
+            // backfills it, or the quota check would think this condominium has more room than it does.
+            for (var i = 0; i < 6; i++)
+            {
+                condominiumA.TryOccupyUserSlot();
+            }
+
             context.Condominiums.AddRange(
-                new Condominium()
-                {
-                    Id = 1,
-                    Name = "Condominium A",
-                    Address = "Aaa Avenue, 123",
-                    Enabled = true,
-                    MaxUsers = 10,
-                    TowerCount = 2,
-                    // Matches the six UserProfiles seeded below with CondominiumId = 1 (ids 2, 3, 4, 6, 7, 8) -
-                    // OccupiedUserSlots must reflect real occupancy, the same way the production migration
-                    // backfills it, or the quota check would think this condominium has more room than it does.
-                    OccupiedUserSlots = 6,
-                },
+                condominiumA,
                 new Condominium()
                 {
                     Id = 2,

@@ -68,17 +68,12 @@ namespace SmartCondoApi.Services.User
                 }
 
                 // A slot is occupied at registration, not at e-mail confirmation - see the authorization
-                // evolution notes for Step 5. This check reflects whatever was last read into `condo`; the
-                // actual guarantee against a concurrent registration racing past MaxUsers comes from
+                // evolution notes for Step 5. TryOccupyUserSlot reflects whatever was last read into `condo`;
+                // the actual guarantee against a concurrent registration racing past MaxUsers comes from
                 // OccupiedUserSlots being a concurrency token (see SmartCondoContext.OnModelCreating) - the
                 // save below fails with DbUpdateConcurrencyException if another registration committed first,
                 // which is translated back into the same exception this early check throws.
-                if (condo.OccupiedUserSlots >= condo.MaxUsers)
-                {
-                    throw new UsersExceedException("O número máximo de usuários permitidos para este condomínio foi atingido. Entre em contato com o administrador para mais informações.");
-                }
-
-                condo.OccupiedUserSlots += 1;
+                condo.TryOccupyUserSlot();
 
                 await ResidentValidations(userCreateDTO, userTypes, condo);
 
@@ -348,21 +343,20 @@ namespace SmartCondoApi.Services.User
                     throw new ArgumentException($"Condominio {userUpdateDTO.CondominiumId} não encontrado");
                 }
 
-                if (destinationCondo.OccupiedUserSlots >= destinationCondo.MaxUsers)
+                try
+                {
+                    destinationCondo.TryOccupyUserSlot();
+                }
+                catch (UsersExceedException)
                 {
                     throw new UsersExceedException("O número máximo de usuários permitidos para o condomínio de destino foi atingido.");
                 }
-
-                destinationCondo.OccupiedUserSlots += 1;
 
                 if (originCondominiumId.HasValue)
                 {
                     var originCondo = await context.Condominiums.FindAsync(originCondominiumId.Value);
 
-                    if (originCondo != null && originCondo.OccupiedUserSlots > 0)
-                    {
-                        originCondo.OccupiedUserSlots -= 1;
-                    }
+                    originCondo?.ReleaseUserSlot();
                 }
             }
 
@@ -484,9 +478,9 @@ namespace SmartCondoApi.Services.User
             {
                 var condo = await _dependencies.Context.Condominiums.FindAsync(userProfile.CondominiumId.Value);
 
-                if (condo != null && condo.OccupiedUserSlots > 0)
+                if (condo != null)
                 {
-                    condo.OccupiedUserSlots -= 1;
+                    condo.ReleaseUserSlot();
 
                     try
                     {
