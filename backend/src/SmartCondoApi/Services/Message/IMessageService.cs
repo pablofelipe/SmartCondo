@@ -1,13 +1,14 @@
 ﻿using SmartCondoApi.Dto;
+using SmartCondoApi.Models.Permissions;
 
 namespace SmartCondoApi.Services.Message
 {
     public interface IMessageService
     {
-        Task<Models.Message> SendMessageAsync(MessageCreateDto messageDto, long senderId);
-        Task<IEnumerable<MessageDto>> GetReceivedMessagesAsync(long userId);
-        Task<IEnumerable<MessageDto>> GetSentMessagesAsync(long userId);
-        Task<MessageDto> GetMessageAsync(long messageId, long userId);
-        Task MarkAsReadAsync(long messageId, long userId);
+        Task<Models.Message> SendMessageAsync(MessageCreateDto messageDto, AuthenticatedActor actor);
+        Task<IEnumerable<MessageDto>> GetReceivedMessagesAsync(AuthenticatedActor actor);
+        Task<IEnumerable<MessageDto>> GetSentMessagesAsync(AuthenticatedActor actor);
+        Task<MessageDto> GetMessageAsync(long messageId, AuthenticatedActor actor);
+        Task MarkAsReadAsync(long messageId, AuthenticatedActor actor);
     }
 }

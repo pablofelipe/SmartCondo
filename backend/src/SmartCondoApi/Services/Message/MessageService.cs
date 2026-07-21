@@ -27,7 +27,9 @@ namespace SmartCondoApi.Services.Message
             if (userType == null)
                 throw new ArgumentException("Tipo de usuário não encontrado");
 
-            if (sender.CondominiumId == null && !UserTypeRoles.IsSystemAdmin(userType.Name))
+            var hasUnrestrictedScope = _permissions.TryGetValue(userType.Name, out var permissions) && permissions.CanManageAllCondominiums;
+
+            if (sender.CondominiumId == null && !hasUnrestrictedScope)
                 throw new InvalidOperationException("Usuário não está associado ao condomínio");
 
             return sender;
@@ -44,13 +46,13 @@ namespace SmartCondoApi.Services.Message
                 ?? throw new InvalidOperationException("CondominiumId must be specified for group messages");
         }
 
-        public async Task<Models.Message> SendMessageAsync(MessageCreateDto messageDto, long senderId)
+        public async Task<Models.Message> SendMessageAsync(MessageCreateDto messageDto, AuthenticatedActor actor)
         {
-            var sender = await GetSenderWithValidationAsync(senderId);
+            var sender = await GetSenderWithValidationAsync(actor.Id);
 
             if (sender == null)
             {
-                _logger.LogWarning("Sender not found with ID {SenderId}", senderId);
+                _logger.LogWarning("Sender not found with ID {SenderId}", actor.Id);
                 throw new ArgumentException("Sender not found");
             }
 
@@ -64,7 +66,7 @@ namespace SmartCondoApi.Services.Message
             // Validar permissões do remetente
             if (!ValidateSenderPermissions(sender, messageDto, senderPermissions))
             {
-                _logger.LogWarning("Permission denied for sender {SenderId} to send message of type {Scope}", senderId, messageDto.Scope);
+                _logger.LogWarning("Permission denied for sender {SenderId} to send message of type {Scope}", actor.Id, messageDto.Scope);
                 throw new UnauthorizedAccessException("You don't have permission to send this message");
             }
 
@@ -76,7 +78,7 @@ namespace SmartCondoApi.Services.Message
             {
                 Content = messageDto.Content,
                 SentDate = DateTime.UtcNow,
-                SenderId = senderId,
+                SenderId = actor.Id,
                 Scope = messageDto.Scope,
                 CondominiumId = condominiumId,
                 TowerId = messageDto.TowerId,
@@ -103,7 +105,7 @@ namespace SmartCondoApi.Services.Message
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Message {MessageId} sent by {SenderId} to {RecipientCount} recipients", message.Id, senderId, recipients.Count);
+            _logger.LogInformation("Message {MessageId} sent by {SenderId} to {RecipientCount} recipients", message.Id, actor.Id, recipients.Count);
 
             return message;
         }
@@ -127,8 +129,8 @@ namespace SmartCondoApi.Services.Message
             // Verificar se está tentando enviar para outro condomínio
             if (messageDto.CondominiumId.HasValue && messageDto.CondominiumId != sender.CondominiumId)
             {
-                // Apenas SystemAdmin pode enviar para outros condomínios
-                return UserTypeRoles.IsSystemAdmin(sender.UserType.Name);
+                // Scope irrestrito é quem pode enviar para outros condomínios
+                return senderPermissions.CanManageAllCondominiums;
             }
 
             return true;
@@ -167,8 +169,8 @@ namespace SmartCondoApi.Services.Message
                     throw new UnauthorizedAccessException($"You can't send messages to {recipient.UserType.Description}");
                 }
 
-                // Verificar se está no mesmo condomínio (exceto para SystemAdmin)
-                if (!UserTypeRoles.IsSystemAdmin(sender.UserType.Name) &&
+                // Verificar se está no mesmo condomínio (exceto para escopo irrestrito)
+                if (!senderPermissions.CanManageAllCondominiums &&
                     recipient.CondominiumId != sender.CondominiumId)
                 {
                     _logger.LogWarning("Attempt to send message to recipient from different condominium");
@@ -214,8 +216,10 @@ namespace SmartCondoApi.Services.Message
             return await query.ToListAsync();
         }
 
-        public async Task<IEnumerable<MessageDto>> GetReceivedMessagesAsync(long userId)
+        public async Task<IEnumerable<MessageDto>> GetReceivedMessagesAsync(AuthenticatedActor actor)
         {
+            var userId = actor.Id;
+
             var messages = await _context.UserMessages
                 .Include(um => um.Message)
                     .ThenInclude(m => m.Sender)
@@ -255,8 +259,10 @@ namespace SmartCondoApi.Services.Message
             return messages;
         }
 
-        public async Task<IEnumerable<MessageDto>> GetSentMessagesAsync(long userId)
+        public async Task<IEnumerable<MessageDto>> GetSentMessagesAsync(AuthenticatedActor actor)
         {
+            var userId = actor.Id;
+
             var messages = await _context.Messages
                 .Include(m => m.Sender)
                     .ThenInclude(s => s.UserType)
@@ -292,8 +298,10 @@ namespace SmartCondoApi.Services.Message
             return messages;
         }
 
-        public async Task<MessageDto> GetMessageAsync(long messageId, long userId)
+        public async Task<MessageDto> GetMessageAsync(long messageId, AuthenticatedActor actor)
         {
+            var userId = actor.Id;
+
             // Verifica se o usuário tem acesso à mensagem (como remetente ou destinatário)
             var message = await _context.Messages
                 .Include(m => m.Sender)
@@ -335,10 +343,10 @@ namespace SmartCondoApi.Services.Message
             return message;
         }
 
-        public async Task MarkAsReadAsync(long messageId, long userId)
+        public async Task MarkAsReadAsync(long messageId, AuthenticatedActor actor)
         {
             var userMessage = await _context.UserMessages
-                .FirstOrDefaultAsync(um => um.MessageId == messageId && um.UserProfileId == userId);
+                .FirstOrDefaultAsync(um => um.MessageId == messageId && um.UserProfileId == actor.Id);
 
             if (userMessage == null)
             {

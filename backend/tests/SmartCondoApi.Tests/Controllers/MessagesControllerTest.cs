@@ -27,7 +27,7 @@ namespace SmartCondoApi.Tests.Controllers
         {
             var loggerMock = new Mock<ILogger<MessagesController>>();
 
-            MessagesController _controller = new(_messageService, _notificationService, _userManager, loggerMock.Object)
+            MessagesController _controller = new(_messageService, _notificationService, loggerMock.Object)
             {
                 ControllerContext = new ControllerContext
                 {
@@ -49,7 +49,8 @@ namespace SmartCondoApi.Tests.Controllers
 
             var sender = new ClaimsPrincipal(new ClaimsIdentity(
             [
-            new Claim(ClaimTypes.NameIdentifier, "2" /*"adminA@aaa.com"*/)
+            new Claim(ClaimTypes.NameIdentifier, "2" /*"adminA@aaa.com"*/),
+            new Claim(ClaimTypes.Role, "CondominiumAdministrator")
             ]));
 
             var fakeMessageCreateDto = new MessageCreateDto

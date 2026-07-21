@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SmartCondoApi.Dto;
 using SmartCondoApi.Exceptions;
-using SmartCondoApi.Models;
+using SmartCondoApi.Infra;
 using SmartCondoApi.Services.Message;
 using SmartCondoApi.Services.Notification;
 
@@ -12,25 +11,19 @@ namespace SmartCondoApi.Controllers
     [ApiController]
     [Route("api/v{version:apiVersion}/[controller]")]
     [Authorize]
-    public class MessagesController(IMessageService messageService, INotificationService notificationService, UserManager<User> userManager, ILogger<MessagesController> _logger) : ControllerBase
+    public class MessagesController(IMessageService messageService, INotificationService notificationService, ILogger<MessagesController> _logger) : ControllerBase
     {
         private readonly IMessageService _messageService = messageService;
         private readonly INotificationService _notificationService = notificationService;
-        private readonly UserManager<User> _userManager = userManager;
 
         [HttpPost]
         public async Task<ActionResult> SendMessage([FromBody] MessageCreateDto messageDto)
         {
-            var userId = _userManager.GetUserId(User);
-
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized();
-            }
+            var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
 
             try
             {
-                var message = await _messageService.SendMessageAsync(messageDto, Convert.ToInt64(userId));
+                var message = await _messageService.SendMessageAsync(messageDto, actor);
 
                 await _notificationService.NotifyNewMessageAsync(message);
 
@@ -58,33 +51,27 @@ namespace SmartCondoApi.Controllers
         [HttpGet("received")]
         public async Task<ActionResult> GetReceivedMessages()
         {
-            var userId = _userManager.GetUserId(User);
+            var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
 
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
-
-            var messages = await _messageService.GetReceivedMessagesAsync(Convert.ToInt64(userId));
+            var messages = await _messageService.GetReceivedMessagesAsync(actor);
             return Ok(messages);
         }
 
         [HttpGet("sent")]
         public async Task<ActionResult> GetSentMessages()
         {
-            var userId = _userManager.GetUserId(User);
+            var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
 
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
-
-            var messages = await _messageService.GetSentMessagesAsync(Convert.ToInt64(userId));
+            var messages = await _messageService.GetSentMessagesAsync(actor);
             return Ok(messages);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult> GetMessage(long id)
         {
-            var userId = _userManager.GetUserId(User);
+            var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
 
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
-
-            var message = await _messageService.GetMessageAsync(id, Convert.ToInt64(userId));
+            var message = await _messageService.GetMessageAsync(id, actor);
 
             if (message == null) return NotFound();
 
@@ -97,18 +84,11 @@ namespace SmartCondoApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> MarkAsRead(long id)
         {
-            var userId = _userManager.GetUserId(User);
-
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized();
-            }
+            var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
 
             try
             {
-                var userProfileId = Convert.ToInt64(userId);
-
-                await _messageService.MarkAsReadAsync(id, userProfileId);
+                await _messageService.MarkAsReadAsync(id, actor);
 
                 return NoContent();
             }
