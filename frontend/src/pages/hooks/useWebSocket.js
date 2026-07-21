@@ -6,7 +6,8 @@ export const useWebSocket = (userId, onMessage) => {
   const ws = useRef(null);
 
   const connect = useCallback(() => {
-    const websocketUrl = `${config.apiGatewayUrl}?userId=${userId}`;
+    const token = localStorage.getItem('token');
+    const websocketUrl = `${config.apiGatewayUrl}?token=${encodeURIComponent(token)}`;
 
     ws.current = new WebSocket(websocketUrl);
 

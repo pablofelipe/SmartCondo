@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using SmartCondoApi.Functions;
 using SmartCondoApi.Models;
 
@@ -21,6 +22,14 @@ namespace SmartCondoApi.Services.Lambda
 
             services.AddDbContext<SmartCondoContext>(options =>
                 options.UseNpgsql(connectionString));
+
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            services.AddSingleton<IConfiguration>(configuration);
 
             services.AddScoped<WebSocketFunctions>();
 

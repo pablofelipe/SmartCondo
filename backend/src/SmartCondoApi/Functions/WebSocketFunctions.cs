@@ -1,17 +1,23 @@
 ﻿using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using SmartCondoApi.Models;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace SmartCondoApi.Functions
 {
     public class WebSocketFunctions
     {
         private readonly IServiceProvider _serviceProvider;
+        private readonly IConfiguration _configuration;
 
-        public WebSocketFunctions(IServiceProvider serviceProvider)
+        public WebSocketFunctions(IServiceProvider serviceProvider, IConfiguration configuration)
         {
             _serviceProvider = serviceProvider;
+            _configuration = configuration;
         }
 
         public async Task<APIGatewayProxyResponse> ConnectHandler(
@@ -24,20 +30,25 @@ namespace SmartCondoApi.Functions
             {
                 var connectionId = request.RequestContext.ConnectionId;
 
-                if (!request.QueryStringParameters.TryGetValue("userId", out var userIdStr) ||
-                    !long.TryParse(userIdStr, out var userId))
+                // The WebSocket handshake can't carry an Authorization header from a browser client,
+                // so the JWT travels as a query string parameter instead. The connecting user's identity
+                // must come from this validated token, never from a caller-supplied userId - trusting a
+                // raw userId query parameter would let anyone subscribe to any other user's notifications.
+                if (request.QueryStringParameters == null ||
+                    !request.QueryStringParameters.TryGetValue("token", out var token) ||
+                    !TryGetUserIdFromToken(token, out var userId))
                 {
-                    return new APIGatewayProxyResponse { StatusCode = 400 };
+                    return new APIGatewayProxyResponse { StatusCode = 401 };
                 }
 
-                // Remover conexões antigas do mesmo usuário
+                // Remove any older connections for the same user
                 var existingConnections = await dbContext.WebSocketConnections
                     .Where(c => c.UserId == userId)
                     .ToListAsync();
 
                 dbContext.WebSocketConnections.RemoveRange(existingConnections);
 
-                // Adicionar nova conexão
+                // Add the new connection
                 dbContext.WebSocketConnections.Add(new WebSocketConnection
                 {
                     ConnectionId = connectionId,
@@ -82,6 +93,46 @@ namespace SmartCondoApi.Functions
             {
                 context.Logger.LogError($"Error in DisconnectHandler: {ex.Message}");
                 return new APIGatewayProxyResponse { StatusCode = 500 };
+            }
+        }
+
+        private bool TryGetUserIdFromToken(string? token, out long userId)
+        {
+            userId = 0;
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return false;
+            }
+
+            var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") ?? _configuration["Jwt:Key"];
+
+            if (string.IsNullOrEmpty(jwtKey))
+            {
+                return false;
+            }
+
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = _configuration["Jwt:Issuer"],
+                ValidAudience = _configuration["Jwt:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(jwtKey))
+            };
+
+            try
+            {
+                var principal = new JwtSecurityTokenHandler().ValidateToken(token, validationParameters, out _);
+                var subject = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                return !string.IsNullOrEmpty(subject) && long.TryParse(subject, out userId);
+            }
+            catch (SecurityTokenException)
+            {
+                return false;
             }
         }
     }
