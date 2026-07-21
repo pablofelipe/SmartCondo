@@ -1,6 +1,7 @@
 ﻿using Amazon.ApiGatewayManagementApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -21,6 +22,7 @@ using SmartCondoApi.Services.Message;
 using SmartCondoApi.Services.Notification;
 using SmartCondoApi.Services.User;
 using SmartCondoApi.Services.Vehicle;
+using System.Threading.RateLimiting;
 
 namespace SmartCondoApi;
 
@@ -94,6 +96,33 @@ public class Startup
         });
 
         services.AddAuthorization();
+
+        services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+            // Login is the highest-value target for brute-forcing credentials, so it gets the
+            // tightest window. PublicKeyRateLimit already had an [EnableRateLimiting] attribute on
+            // it with nothing behind it - this is what makes that attribute actually do something.
+            options.AddPolicy("LoginRateLimit", httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 5,
+                        Window = TimeSpan.FromMinutes(1)
+                    }));
+
+            options.AddPolicy("PublicKeyRateLimit", httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 20,
+                        Window = TimeSpan.FromMinutes(1)
+                    }));
+        });
+
         services.AddControllers();
         services.AddApiVersioning();
         services.AddEndpointsApiExplorer();
@@ -218,6 +247,8 @@ public class Startup
         app.UseRouting();
 
         app.UseCors("DynamicCors");
+
+        app.UseRateLimiter();
 
         app.UseAuthentication();
         app.UseAuthorization();

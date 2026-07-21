@@ -12,6 +12,7 @@ namespace SmartCondoApi.Controllers
     {
         [HttpPost("login")]
         [AllowAnonymous]
+        [EnableRateLimiting("LoginRateLimit")]
         public async Task<ActionResult> Login([FromBody] Dictionary<string, string> body)
         {
             try
