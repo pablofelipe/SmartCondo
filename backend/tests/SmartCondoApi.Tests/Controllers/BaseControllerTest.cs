@@ -86,7 +86,7 @@ namespace SmartCondoApi.Tests.Controllers
         protected UserProfileController LoadUserProfileController(string? callerRole = "SystemAdministrator", long callerId = 1)
         {
             IConfiguration mockConfiguration = GetConfiguration();
-            var emailService = new EmailServiceTests(mockConfiguration);
+            var emailService = new FakeEmailService(mockConfiguration);
             var emailConfService = new EmailConfirmationService(_userManager);
 
             var mockHttpContext = new Mock<HttpContext>();

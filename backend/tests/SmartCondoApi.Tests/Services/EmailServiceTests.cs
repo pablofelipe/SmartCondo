@@ -1,29 +1,80 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using SmartCondoApi.Services.Email;
 
 namespace SmartCondoApi.Tests.Services
 {
-    public class EmailServiceTests(IConfiguration configuration) : IEmailService
+    [TestClass]
+    public class EmailServiceTests
     {
-        public Task SendEmailAsync(string email, string subject, string message)
+        private static IConfiguration BuildConfiguration(Dictionary<string, string?> overrides)
         {
-            return Task.CompletedTask;
+            var settings = new Dictionary<string, string?>
+            {
+                ["EmailSettings:SmtpServer"] = "smtp.example.com",
+                ["EmailSettings:SmtpPort"] = "587",
+                ["EmailSettings:FromEmail"] = "noreply@example.com",
+                ["EmailSettings:FromPassword"] = "secret",
+                ["EmailSettings:EnableSsl"] = "true"
+            };
+
+            foreach (var (key, value) in overrides)
+                settings[key] = value;
+
+            return new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         }
 
-        //public async Task TestSendEmailAsync()
-        //{
-        //    // Arrange
-        //    var mockEmailService = new Mock<IEmailService>();
+        [TestMethod]
+        public void ResolveSmtpSettings_AllValuesPresent_ReturnsParsedSettings()
+        {
+            var configuration = BuildConfiguration([]);
 
-        //    mockEmailService
-        //        .Setup(service => service.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-        //        .Returns(Task.CompletedTask);
+            var settings = EmailService.ResolveSmtpSettings(configuration);
 
-        //    // Act
-        //    await mockEmailService.Object.SendEmailAsync("test@example.com", "Subject", "Message");
+            Assert.AreEqual("smtp.example.com", settings.Server);
+            Assert.AreEqual(587, settings.Port);
+            Assert.AreEqual("noreply@example.com", settings.FromEmail);
+            Assert.AreEqual("secret", settings.FromPassword);
+            Assert.IsTrue(settings.EnableSsl);
+        }
 
-        //    // Assert
-        //    mockEmailService.Verify(service => service.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-        //}
+        [TestMethod]
+        public void ResolveSmtpSettings_MissingSmtpServer_Throws()
+        {
+            var configuration = BuildConfiguration(new() { ["EmailSettings:SmtpServer"] = null });
+
+            Assert.ThrowsException<InvalidOperationException>(() => EmailService.ResolveSmtpSettings(configuration));
+        }
+
+        [TestMethod]
+        public void ResolveSmtpSettings_MissingFromEmail_Throws()
+        {
+            var configuration = BuildConfiguration(new() { ["EmailSettings:FromEmail"] = null });
+
+            Assert.ThrowsException<InvalidOperationException>(() => EmailService.ResolveSmtpSettings(configuration));
+        }
+
+        [TestMethod]
+        public void ResolveSmtpSettings_MissingFromPassword_Throws()
+        {
+            var configuration = BuildConfiguration(new() { ["EmailSettings:FromPassword"] = null });
+
+            Assert.ThrowsException<InvalidOperationException>(() => EmailService.ResolveSmtpSettings(configuration));
+        }
+
+        [TestMethod]
+        public void ResolveSmtpSettings_NonNumericSmtpPort_Throws()
+        {
+            var configuration = BuildConfiguration(new() { ["EmailSettings:SmtpPort"] = "not-a-port" });
+
+            Assert.ThrowsException<InvalidOperationException>(() => EmailService.ResolveSmtpSettings(configuration));
+        }
+
+        [TestMethod]
+        public void ResolveSmtpSettings_NonBooleanEnableSsl_Throws()
+        {
+            var configuration = BuildConfiguration(new() { ["EmailSettings:EnableSsl"] = "maybe" });
+
+            Assert.ThrowsException<InvalidOperationException>(() => EmailService.ResolveSmtpSettings(configuration));
+        }
     }
 }

@@ -14,7 +14,6 @@
     <PackageReference Include="Amazon.Lambda.Core" Version="2.7.0" />
     <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
     <PackageReference Include="AWSSDK.ApiGatewayManagementApi" Version="4.0.1.1" />
-    <PackageReference Include="AWSSDK.SimpleEmail" Version="4.0.0.19" />
     <PackageReference Include="HotChocolate.AspNetCore" Version="15.1.4" />
     <PackageReference Include="HotChocolate.Data" Version="15.1.4" />
     <PackageReference Include="HotChocolate.Data.EntityFramework" Version="15.1.4" />
