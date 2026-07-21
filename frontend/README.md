@@ -17,7 +17,8 @@ Runtime endpoints are resolved in [`src/config.ts`](src/config.ts):
 |---|---|---|
 | `REACT_APP_API_URL` | `http://localhost:5254/api/v1` | REST API base URL |
 | `REACT_APP_GRAPHQL_URL` | `http://localhost:5254/graphql` | GraphQL endpoint |
-| `REACT_APP_DOCKER_MODE` | `false` | When `true`, uses relative paths (`/api/v1`, `/graphql`) proxied by nginx |
+| `REACT_APP_WS_URL` | `ws://localhost:5254/ws` | Realtime notification WebSocket endpoint |
+| `REACT_APP_DOCKER_MODE` | `false` | When `true`, uses relative paths (`/api/v1`, `/graphql`) and a same-host WebSocket URL, proxied by nginx |
 
 ## Install and run
 
