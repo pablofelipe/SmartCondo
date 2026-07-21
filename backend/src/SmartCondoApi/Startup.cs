@@ -40,6 +40,11 @@ public class Startup
         _env = env;
     }
 
+    // Debug-level logs include request payloads with resident PII (e.g. UserProfileService's
+    // apartment/parking details) - fine for local debugging, not something Production should ever emit.
+    public static LogLevel ResolveMinimumLogLevel(bool isDevelopment) =>
+        isDevelopment ? LogLevel.Debug : LogLevel.Information;
+
     public void ConfigureServices(IServiceCollection services)
     {
         var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
@@ -200,7 +205,7 @@ public class Startup
                 IncludeLogLevel = true
             });
 
-            logging.SetMinimumLevel(LogLevel.Debug);
+            logging.SetMinimumLevel(ResolveMinimumLogLevel(_env.IsDevelopment()));
         });
 
         services.AddHttpLogging(options =>
