@@ -26,13 +26,12 @@ These combine as:
 
 ```
 Decision(Actor, Operation, Resource) =
-    Capability(Role(Actor), Operation)
-    AND [ Scope(Actor) contains Tenant(Resource)
-          OR Relationship(Actor, Resource) satisfies Operation ]
+    [ ( Capability(Role(Actor), Operation) AND Scope(Actor) contains Tenant(Resource) )
+      OR Relationship(Actor, Resource) satisfies Operation ]
     AND State(Resource) permits Operation
 ```
 
-The middle clause is a deliberate disjunction: most administrative operations are authorized through Scope membership; operations on an actor's own resources are authorized through Relationship alone, with no administrative Capability required. Which combination applies is a property of each operation's definition, not a universal rule.
+Self-service (the Relationship path) and the administrative path are independent sources of authority, not two ways of satisfying the same requirement — self-service needs no administrative Capability at all, because the authority to act on one's own resource does not derive from one's role. Which paths apply to a given operation is a property of that operation's definition, not a universal rule; some operations (e.g. creating a brand-new resource with no prior owner) only ever have an administrative path, because there is no existing resource to hold a Relationship to.
 
 ### Actors
 
@@ -56,3 +55,9 @@ A further distinction cuts across this list: not every entry in the domain's rol
 - State-based restrictions must be evaluated at decision time against the resource's current condition, never assumed from a snapshot taken earlier (e.g., at login).
 - This model supersedes no prior ADR; it fills a gap. ADR-0002 remains the accepted decision for how identity is established — this ADR governs what happens once identity is known.
 - ADR-0006 (ubiquitous language), ADR-0007 (authorization as a supporting subdomain), ADR-0008 (authority chain and delegation) and ADR-0009 (domain invariants) refine and formalize parts of this model; none of them may contradict the structure defined here without superseding this ADR explicitly.
+
+## Amendment
+
+The decision formula originally published here expressed Capability as an unconditional top-level requirement (`Capability AND [Scope OR Relationship] AND State`), which contradicted this same document's own prose describing Relationship as authority granted "on its own, without requiring any administrative capability." Implementation work on the first Relationship-based checks surfaced the contradiction directly: applying Capability as a blanket prerequisite would have denied actors authority over their own resources whenever their role held no matching administrative Capability, which is precisely the case self-service exists to cover.
+
+The formula is corrected above to state the administrative path and the self-service path as two independent, OR-combined sources of authority, each evaluated on its own terms, with State applying to whichever path succeeds. No other part of this ADR changes.
