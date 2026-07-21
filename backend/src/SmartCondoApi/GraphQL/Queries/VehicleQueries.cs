@@ -16,6 +16,7 @@ namespace SmartCondoApi.GraphQL.Queries
         public async Task<IEnumerable<Vehicle>> GetVehicles(
             [Service] IVehicleService vehicleService,
             [Service] IHttpContextAccessor httpContextAccessor,
+            [Service] ILogger<VehicleQueries> logger,
             [GraphQLType(typeof(VehicleFilterInputType))] VehicleFilterInput? filter = null)
         {
             try
@@ -32,8 +33,9 @@ namespace SmartCondoApi.GraphQL.Queries
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Unhandled exception in {Resolver}", nameof(GetVehicles));
                 throw new GraphQLException(new ErrorBuilder()
-                    .SetMessage(ex.Message)
+                    .SetMessage("An unexpected error occurred while fetching vehicles")
                     .SetCode("VEHICLE_FETCH_ERROR")
                     .Build());
             }
@@ -42,6 +44,7 @@ namespace SmartCondoApi.GraphQL.Queries
         public async Task<Vehicle> GetVehicle(
             [Service] IVehicleService vehicleService,
             [Service] IHttpContextAccessor httpContextAccessor,
+            [Service] ILogger<VehicleQueries> logger,
             [ID] string id)
         {
             try
@@ -66,10 +69,16 @@ namespace SmartCondoApi.GraphQL.Queries
                     .SetCode("FORBIDDEN")
                     .Build());
             }
+            catch (GraphQLException)
+            {
+                // Already a deliberately-shaped client error (invalid id, not found) - let it through as-is.
+                throw;
+            }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Unhandled exception in {Resolver}", nameof(GetVehicle));
                 throw new GraphQLException(new ErrorBuilder()
-                    .SetMessage(ex.Message)
+                    .SetMessage("An unexpected error occurred while fetching the vehicle")
                     .SetCode("VEHICLE_FETCH_ERROR")
                     .Build());
             }

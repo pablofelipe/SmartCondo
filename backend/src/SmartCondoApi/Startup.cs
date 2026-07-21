@@ -27,10 +27,12 @@ namespace SmartCondoApi;
 public class Startup
 {
     private readonly IConfiguration _configuration;
+    private readonly IWebHostEnvironment _env;
 
-    public Startup(IConfiguration configuration)
+    public Startup(IConfiguration configuration, IWebHostEnvironment env)
     {
         _configuration = configuration;
+        _env = env;
     }
 
     public void ConfigureServices(IServiceCollection services)
@@ -167,7 +169,7 @@ public class Startup
             .AddProjections()
             .ModifyRequestOptions(options =>
             {
-                options.IncludeExceptionDetails = true;
+                options.IncludeExceptionDetails = _env.IsDevelopment();
             });
 
         services.AddSingleton<IAmazonApiGatewayManagementApi>(provider =>

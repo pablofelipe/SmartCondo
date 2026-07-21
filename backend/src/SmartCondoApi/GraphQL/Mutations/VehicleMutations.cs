@@ -12,6 +12,7 @@ namespace SmartCondoApi.GraphQL.Mutations
         public async Task<Vehicle> CreateVehicle(
             [Service] IVehicleService vehicleService,
             [Service] IHttpContextAccessor httpContextAccessor,
+            [Service] ILogger<VehicleMutations> logger,
             VehicleInput input)
         {
             try
@@ -44,12 +45,17 @@ namespace SmartCondoApi.GraphQL.Mutations
                     .SetCode("FORBIDDEN")
                     .Build());
             }
+            catch (GraphQLException)
+            {
+                // Already a deliberately-shaped client error (missing UserID) - let it through as-is.
+                throw;
+            }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Unhandled exception in {Resolver}", nameof(CreateVehicle));
                 throw new GraphQLException(new ErrorBuilder()
-                    .SetMessage(ex.Message)
+                    .SetMessage("An unexpected error occurred while creating the vehicle")
                     .SetCode("VEHICLE_CREATION_ERROR")
-                    .SetExtension("input", input)
                     .Build());
             }
         }
@@ -57,6 +63,7 @@ namespace SmartCondoApi.GraphQL.Mutations
         public async Task<Vehicle> UpdateVehicle(
             [Service] IVehicleService vehicleService,
             [Service] IHttpContextAccessor httpContextAccessor,
+            [Service] ILogger<VehicleMutations> logger,
             [ID] string id,
             VehicleInput input)
         {
@@ -106,12 +113,17 @@ namespace SmartCondoApi.GraphQL.Mutations
                     .SetCode("FORBIDDEN")
                     .Build());
             }
+            catch (GraphQLException)
+            {
+                // Already a deliberately-shaped client error (invalid id, missing UserID, not found) - let it through as-is.
+                throw;
+            }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Unhandled exception in {Resolver}", nameof(UpdateVehicle));
                 throw new GraphQLException(new ErrorBuilder()
-                    .SetMessage(ex.Message)
+                    .SetMessage("An unexpected error occurred while updating the vehicle")
                     .SetCode("VEHICLE_UPDATE_ERROR")
-                    .SetExtension("id", id)
                     .Build());
             }
         }
@@ -119,6 +131,7 @@ namespace SmartCondoApi.GraphQL.Mutations
         public async Task<bool> DeleteVehicle(
             [Service] IVehicleService vehicleService,
             [Service] IHttpContextAccessor httpContextAccessor,
+            [Service] ILogger<VehicleMutations> logger,
             [ID] string id)
         {
             try
@@ -149,12 +162,17 @@ namespace SmartCondoApi.GraphQL.Mutations
                     .SetCode("FORBIDDEN")
                     .Build());
             }
+            catch (GraphQLException)
+            {
+                // Already a deliberately-shaped client error (invalid id, not found) - let it through as-is.
+                throw;
+            }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Unhandled exception in {Resolver}", nameof(DeleteVehicle));
                 throw new GraphQLException(new ErrorBuilder()
-                    .SetMessage(ex.Message)
+                    .SetMessage("An unexpected error occurred while deleting the vehicle")
                     .SetCode("VEHICLE_DELETION_ERROR")
-                    .SetExtension("id", id)
                     .Build());
             }
         }
