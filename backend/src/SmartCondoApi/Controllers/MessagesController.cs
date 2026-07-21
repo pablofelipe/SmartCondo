@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SmartCondoApi.Dto;
 using SmartCondoApi.Exceptions;
 using SmartCondoApi.Models;
@@ -13,27 +12,25 @@ namespace SmartCondoApi.Controllers
     [ApiController]
     [Route("api/v{version:apiVersion}/[controller]")]
     [Authorize]
-    public class MessagesController(IMessageService messageService, INotificationService notificationService, UserManager<User> userManager, SmartCondoContext context, ILogger<MessagesController> _logger) : ControllerBase
+    public class MessagesController(IMessageService messageService, INotificationService notificationService, UserManager<User> userManager, ILogger<MessagesController> _logger) : ControllerBase
     {
         private readonly IMessageService _messageService = messageService;
         private readonly INotificationService _notificationService = notificationService;
         private readonly UserManager<User> _userManager = userManager;
-        private readonly SmartCondoContext _context = context;
 
         [HttpPost]
         public async Task<ActionResult> SendMessage([FromBody] MessageCreateDto messageDto)
         {
             var userId = _userManager.GetUserId(User);
-            var userProfile = await _context.UserProfiles.FirstOrDefaultAsync(u => u.Id == Convert.ToInt64(userId));
 
-            if (userProfile == null)
+            if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized();
             }
 
             try
             {
-                var message = await _messageService.SendMessageAsync(messageDto, userProfile.Id);
+                var message = await _messageService.SendMessageAsync(messageDto, Convert.ToInt64(userId));
 
                 await _notificationService.NotifyNewMessageAsync(message);
 
@@ -62,11 +59,10 @@ namespace SmartCondoApi.Controllers
         public async Task<ActionResult> GetReceivedMessages()
         {
             var userId = _userManager.GetUserId(User);
-            var userProfile = await _context.UserProfiles.FirstOrDefaultAsync(u => u.Id == Convert.ToInt64(userId));
 
-            if (userProfile == null) return Unauthorized();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var messages = await _messageService.GetReceivedMessagesAsync(userProfile.Id);
+            var messages = await _messageService.GetReceivedMessagesAsync(Convert.ToInt64(userId));
             return Ok(messages);
         }
 
@@ -74,11 +70,10 @@ namespace SmartCondoApi.Controllers
         public async Task<ActionResult> GetSentMessages()
         {
             var userId = _userManager.GetUserId(User);
-            var userProfile = await _context.UserProfiles.FirstOrDefaultAsync(u => u.Id == Convert.ToInt64(userId));
 
-            if (userProfile == null) return Unauthorized();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var messages = await _messageService.GetSentMessagesAsync(userProfile.Id);
+            var messages = await _messageService.GetSentMessagesAsync(Convert.ToInt64(userId));
             return Ok(messages);
         }
 
@@ -86,11 +81,10 @@ namespace SmartCondoApi.Controllers
         public async Task<ActionResult> GetMessage(long id)
         {
             var userId = _userManager.GetUserId(User);
-            var userProfile = await _context.UserProfiles.FirstOrDefaultAsync(u => u.Id == Convert.ToInt64(userId));
 
-            if (userProfile == null) return Unauthorized();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var message = await _messageService.GetMessageAsync(id, userProfile.Id);
+            var message = await _messageService.GetMessageAsync(id, Convert.ToInt64(userId));
 
             if (message == null) return NotFound();
 

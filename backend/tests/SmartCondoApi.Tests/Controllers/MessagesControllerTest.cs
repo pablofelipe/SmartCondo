@@ -27,7 +27,7 @@ namespace SmartCondoApi.Tests.Controllers
         {
             var loggerMock = new Mock<ILogger<MessagesController>>();
 
-            MessagesController _controller = new(_messageService, _notificationService, _userManager, _context, loggerMock.Object)
+            MessagesController _controller = new(_messageService, _notificationService, _userManager, loggerMock.Object)
             {
                 ControllerContext = new ControllerContext
                 {
