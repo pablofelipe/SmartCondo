@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SmartCondoApi.Dto;
 using SmartCondoApi.Exceptions;
+using System.Security.Claims;
 
 namespace SmartCondoApi.Controllers
 {
@@ -16,7 +17,9 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var userProfileResponseDTO = await _dependencies.UserProfileService.Add(userCreateDTO);
+                var callerRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+                var userProfileResponseDTO = await _dependencies.UserProfileService.Add(userCreateDTO, callerRole);
 
                 var _logger = _dependencies.Logger;
 
@@ -75,6 +78,18 @@ namespace SmartCondoApi.Controllers
             catch (ParkingSpaceNumberException ex)
             {
                 return Unauthorized(new { ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return new ObjectResult(new ProblemDetails
+                {
+                    Title = "Forbidden",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status403Forbidden
+                })
+                {
+                    StatusCode = StatusCodes.Status403Forbidden
+                };
             }
             catch (Exception ex)
             {

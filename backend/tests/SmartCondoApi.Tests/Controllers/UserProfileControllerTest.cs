@@ -19,9 +19,9 @@ namespace SmartCondoApi.Tests.Controllers
             _context?.Dispose();
         }
 
-        private async Task<OkObjectResult> PerformSuccessAddUserTest(UserProfileCreateDTO userCreateDTO)
+        private async Task<OkObjectResult> PerformSuccessAddUserTest(UserProfileCreateDTO userCreateDTO, string? callerRole = null)
         {
-            var userProfileController = LoadUserProfileController();
+            var userProfileController = LoadUserProfileController(callerRole ?? "SystemAdministrator");
 
             var result = await userProfileController.AddUser(userCreateDTO);
 
@@ -30,6 +30,29 @@ namespace SmartCondoApi.Tests.Controllers
             await PerformConfirmEmailTest(userProfileController, okObjectResult.Value);
 
             return okObjectResult;
+        }
+
+        private async Task<ObjectResult> PerformForbiddenAddUserTest(UserProfileCreateDTO userCreateDTO, string? callerRole, string message)
+        {
+            var userProfileController = LoadUserProfileController(callerRole);
+
+            var result = await userProfileController.AddUser(userCreateDTO);
+
+            ObjectResult? objectResult = ForbiddenAssert(result, message);
+
+            return objectResult;
+        }
+
+        private static ObjectResult? ForbiddenAssert(ActionResult result, string message)
+        {
+            Assert.IsNotNull(result, "O resultado não deve ser nulo.");
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult, "O resultado deve ser do tipo ObjectResult.");
+            Assert.AreEqual(403, objectResult.StatusCode, "O status code deve ser 403.");
+            var problemDetails = objectResult.Value as ProblemDetails;
+            Assert.IsNotNull(problemDetails, "O valor retornado deve ser um ProblemDetails.");
+            Assert.IsTrue(problemDetails.Detail!.Contains(message), $"A Mensagem deve possuir {message}");
+            return objectResult;
         }
 
         [TestMethod]
@@ -59,6 +82,131 @@ namespace SmartCondoApi.Tests.Controllers
 
             var result = await PerformSuccessAddUserTest(fakeUserCreateDTO);
             Console.WriteLine("AddUserSuccess: " + result.Value);
+        }
+
+        [TestMethod]
+        public async Task AddUserBlockedFromCreatingSystemAdministrator()
+        {
+            Console.WriteLine("AddUserBlockedFromCreatingSystemAdministrator begin");
+
+            var fakeUserCreateDTO = new UserProfileCreateDTO
+            {
+                Name = "Fake Admin",
+                Address = "123 Fake Street",
+                Phone1 = "1111111111",
+                UserTypeId = 1, // SystemAdministrator
+                RegistrationNumber = "60340325046",
+                User = new UserCreateDTO
+                {
+                    Email = "escalation@example.com",
+                    Password = "Aa1!aaaa",
+                    Enabled = true
+                }
+            };
+
+            var result = await PerformForbiddenAddUserTest(fakeUserCreateDTO, "CondominiumAdministrator", "not authorized to register");
+            Console.WriteLine("AddUserBlockedFromCreatingSystemAdministrator: " + result.Value);
+        }
+
+        [TestMethod]
+        public async Task AddUserWithoutRegisterCapabilityIsForbidden()
+        {
+            Console.WriteLine("AddUserWithoutRegisterCapabilityIsForbidden begin");
+
+            var fakeUserCreateDTO = new UserProfileCreateDTO
+            {
+                Name = "Fake Resident",
+                Address = "123 Fake Street",
+                Phone1 = "2222222222",
+                UserTypeId = 3, // Resident
+                RegistrationNumber = "31226291007",
+                User = new UserCreateDTO
+                {
+                    Email = "noauth@example.com",
+                    Password = "Aa1!aaaa",
+                    Enabled = true
+                }
+            };
+
+            var result = await PerformForbiddenAddUserTest(fakeUserCreateDTO, "Resident", "not authorized to register");
+            Console.WriteLine("AddUserWithoutRegisterCapabilityIsForbidden: " + result.Value);
+        }
+
+        [TestMethod]
+        public async Task AddUserWithNarrowRegisterableTypesSuccess()
+        {
+            Console.WriteLine("AddUserWithNarrowRegisterableTypesSuccess begin");
+
+            var fakeUserCreateDTO = new UserProfileCreateDTO
+            {
+                Name = "Delegated Resident",
+                Address = "123 Fake Street",
+                Phone1 = "3333333333",
+                UserTypeId = 3, // Resident
+                RegistrationNumber = "48916144043",
+                CondominiumId = 1,
+                TowerId = 1,
+                FloorId = 1,
+                Apartment = 201,
+                ParkingSpaceNumber = 30,
+                User = new UserCreateDTO
+                {
+                    Email = "delegated@example.com",
+                    Password = "Aa1!aaaa",
+                    Enabled = true
+                }
+            };
+
+            var result = await PerformSuccessAddUserTest(fakeUserCreateDTO, "ResidentCommitteeMember");
+            Console.WriteLine("AddUserWithNarrowRegisterableTypesSuccess: " + result.Value);
+        }
+
+        [TestMethod]
+        public async Task AddUserWithNarrowRegisterableTypesForbiddenOutsideList()
+        {
+            Console.WriteLine("AddUserWithNarrowRegisterableTypesForbiddenOutsideList begin");
+
+            var fakeUserCreateDTO = new UserProfileCreateDTO
+            {
+                Name = "Fake Admin",
+                Address = "123 Fake Street",
+                Phone1 = "4444444444",
+                UserTypeId = 2, // CondominiumAdministrator
+                RegistrationNumber = "77817120056",
+                User = new UserCreateDTO
+                {
+                    Email = "escalation2@example.com",
+                    Password = "Aa1!aaaa",
+                    Enabled = true
+                }
+            };
+
+            var result = await PerformForbiddenAddUserTest(fakeUserCreateDTO, "ResidentCommitteeMember", "not authorized to register");
+            Console.WriteLine("AddUserWithNarrowRegisterableTypesForbiddenOutsideList: " + result.Value);
+        }
+
+        [TestMethod]
+        public async Task AddUserWithUnknownCallerRoleIsForbidden()
+        {
+            Console.WriteLine("AddUserWithUnknownCallerRoleIsForbidden begin");
+
+            var fakeUserCreateDTO = new UserProfileCreateDTO
+            {
+                Name = "Fake Resident",
+                Address = "123 Fake Street",
+                Phone1 = "5555555555",
+                UserTypeId = 3, // Resident
+                RegistrationNumber = "05298795064",
+                User = new UserCreateDTO
+                {
+                    Email = "unknownrole@example.com",
+                    Password = "Aa1!aaaa",
+                    Enabled = true
+                }
+            };
+
+            var result = await PerformForbiddenAddUserTest(fakeUserCreateDTO, "NotARealRole", "not authorized to register");
+            Console.WriteLine("AddUserWithUnknownCallerRoleIsForbidden: " + result.Value);
         }
 
         private async Task<BadRequestObjectResult> PerformBadRequestAddUserTest(UserProfileCreateDTO userCreateDTO, string message)

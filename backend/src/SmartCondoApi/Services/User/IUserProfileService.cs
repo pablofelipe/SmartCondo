@@ -5,7 +5,7 @@ namespace SmartCondoApi.Services.User
 {
     public interface IUserProfileService
     {
-        Task<UserProfileResponseDTO> Add(UserProfileCreateDTO userCreateDTO);
+        Task<UserProfileResponseDTO> Add(UserProfileCreateDTO userCreateDTO, string? callerRole);
 
         Task<UserProfileResponseDTO> Update(long userId, UserProfileUpdateDTO userUpdateDTO);
 

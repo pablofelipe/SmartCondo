@@ -3,12 +3,13 @@ using SmartCondoApi.Dto;
 using SmartCondoApi.Exceptions;
 using SmartCondoApi.Infra;
 using SmartCondoApi.Models;
+using SmartCondoApi.Models.Permissions;
 
 namespace SmartCondoApi.Services.User
 {
     public class UserProfileService(IUserProfileServiceDependencies _dependencies, ILogger<UserProfileService> _logger) : IUserProfileService
     {
-        public async Task<UserProfileResponseDTO> Add(UserProfileCreateDTO userCreateDTO)
+        public async Task<UserProfileResponseDTO> Add(UserProfileCreateDTO userCreateDTO, string? callerRole)
         {
             // Valida o CPF/CNPJ
             if (!ValidateRegistrationNumber(userCreateDTO.RegistrationNumber))
@@ -41,6 +42,8 @@ namespace SmartCondoApi.Services.User
             {
                 throw new ArgumentException($"Tipo de usuário {userCreateDTO.UserTypeId} não encontrado");
             }
+
+            EnsureCallerCanRegister(callerRole, userTypes.Name);
 
             var condo = await context.Condominiums.FirstOrDefaultAsync(c => c.Id == userCreateDTO.CondominiumId);
 
@@ -167,6 +170,32 @@ namespace SmartCondoApi.Services.User
         private static bool IsSystemAdmin(string userTypeName)
         {
             return string.Compare(userTypeName, "SystemAdministrator", StringComparison.OrdinalIgnoreCase) == 0;
+        }
+
+        private static void EnsureCallerCanRegister(string? callerRole, string targetRoleName)
+        {
+            if (string.IsNullOrEmpty(callerRole)
+                || !RolePermissions.GetPermissions().TryGetValue(callerRole, out var callerPermissions))
+            {
+                throw new UnauthorizedAccessException($"Your role is not authorized to register a {targetRoleName}");
+            }
+
+            if (callerPermissions.BlockedUserTypes != null && callerPermissions.BlockedUserTypes.Contains(targetRoleName))
+            {
+                throw new UnauthorizedAccessException($"Your role is not authorized to register a {targetRoleName}");
+            }
+
+            if (callerPermissions.CanRegisterAnyUserType)
+            {
+                return;
+            }
+
+            if (callerPermissions.RegisterableUserTypes != null && callerPermissions.RegisterableUserTypes.Contains(targetRoleName))
+            {
+                return;
+            }
+
+            throw new UnauthorizedAccessException($"Your role is not authorized to register a {targetRoleName}");
         }
 
         private static bool IsResident(string userTypeName)

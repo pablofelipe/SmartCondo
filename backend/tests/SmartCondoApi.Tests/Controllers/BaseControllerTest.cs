@@ -19,6 +19,7 @@ using SmartCondoApi.Services.Notification;
 using SmartCondoApi.Services.User;
 using SmartCondoApi.Tests.Helpers;
 using SmartCondoApi.Tests.Services;
+using System.Security.Claims;
 
 namespace SmartCondoApi.Tests.Controllers
 {
@@ -81,7 +82,7 @@ namespace SmartCondoApi.Tests.Controllers
                 .Build();
         }
 
-        protected UserProfileController LoadUserProfileController()
+        protected UserProfileController LoadUserProfileController(string? callerRole = "SystemAdministrator")
         {
             IConfiguration mockConfiguration = GetConfiguration();
             var emailService = new EmailServiceTests(mockConfiguration);
@@ -122,7 +123,19 @@ namespace SmartCondoApi.Tests.Controllers
 
             var userProfileControllerDependencies = new UserProfileControllerDependencies(userService, mockLinkGeneratorService.Object, emailService, emailConfService, loggerMockController.Object);
 
-            return new UserProfileController(userProfileControllerDependencies);
+            var callerClaims = callerRole != null
+                ? new ClaimsIdentity([new Claim(ClaimTypes.Role, callerRole)])
+                : new ClaimsIdentity();
+
+            var controller = new UserProfileController(userProfileControllerDependencies)
+            {
+                ControllerContext = new ControllerContext
+                {
+                    HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(callerClaims) }
+                }
+            };
+
+            return controller;
         }
     }
 }
