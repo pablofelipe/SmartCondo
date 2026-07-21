@@ -1,22 +1,35 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SmartCondoApi.Dto;
 using SmartCondoApi.Exceptions;
+using SmartCondoApi.Infra;
 using SmartCondoApi.Models;
+using SmartCondoApi.Models.Permissions;
 
 namespace SmartCondoApi.Services.Condominium
 {
     public class CondominiumService(SmartCondoContext _context) : ICondominiumService
     {
-        public async Task<IEnumerable<CondominiumResponseDTO>> Get()
+        public async Task<IEnumerable<CondominiumResponseDTO>> Get(AuthenticatedActor actor)
         {
-            var condos = await _context.Condominiums
-                .Include(c => c.Towers)
-                .ToListAsync();
+            if (!RolePermissions.GetPermissions().TryGetValue(actor.Role, out var permissions) || !permissions.CanViewCondominiums)
+            {
+                return [];
+            }
+
+            IQueryable<Models.Condominium> query = _context.Condominiums.Include(c => c.Towers);
+
+            if (!permissions.CanManageAllCondominiums)
+            {
+                var actorTenantId = await _context.GetActorCondominiumIdAsync(actor.Id);
+                query = query.Where(c => c.Id == actorTenantId);
+            }
+
+            var condos = await query.ToListAsync();
 
             return condos.Select(MapToDto).ToList();
         }
 
-        public async Task<CondominiumResponseDTO> Get(int condominiumId)
+        public async Task<CondominiumResponseDTO> Get(int condominiumId, AuthenticatedActor actor)
         {
             var condo = await _context.Condominiums
                 .Include(c => c.Towers)
@@ -27,10 +40,12 @@ namespace SmartCondoApi.Services.Condominium
                 throw new CondominiumNotFoundException($"Condomínio com ID {condominiumId} não encontrado");
             }
 
+            await EnsureAuthorizedAsync(actor, condo.Id, p => p.CanViewCondominiums, "view");
+
             return MapToDto(condo);
         }
 
-        public async Task<List<UserProfileResponseDTO>> SearchUsers(int condominiumId, UserProfileSearchDTO searchDto)
+        public async Task<List<UserProfileResponseDTO>> SearchUsers(int condominiumId, UserProfileSearchDTO searchDto, AuthenticatedActor actor)
         {
             if (condominiumId < 1)
             {
@@ -42,9 +57,11 @@ namespace SmartCondoApi.Services.Condominium
                 throw new InconsistentDataException("Nome ou CPF/CNPJ devem ser informados");
             }
 
-            var query = _context.UserProfiles.Where(u => 
-                        u.CondominiumId == condominiumId 
-                        && null != u.User 
+            await EnsureAuthorizedAsync(actor, condominiumId, p => p.CanViewUsers, "search users in");
+
+            var query = _context.UserProfiles.Where(u =>
+                        u.CondominiumId == condominiumId
+                        && null != u.User
                         && u.User.Enabled == true
                         && u.UserTypeId == searchDto.Type || searchDto.Type == 0);
 
@@ -75,26 +92,38 @@ namespace SmartCondoApi.Services.Condominium
             return usersDto;
         }
 
-        public async Task<List<CondominiumResponseDTO>> Search(CondominiumSearchDTO searchDto)
+        public async Task<List<CondominiumResponseDTO>> Search(CondominiumSearchDTO searchDto, AuthenticatedActor actor)
         {
             if (string.IsNullOrEmpty(searchDto.Name))
             {
                 throw new InconsistentDataException("O nome deve ser informado para busca");
             }
 
-            var query = _context.Condominiums.AsQueryable();
-
-            if (!string.IsNullOrEmpty(searchDto.Name))
+            if (!RolePermissions.GetPermissions().TryGetValue(actor.Role, out var permissions) || !permissions.CanViewCondominiums)
             {
-                query = query.Where(c => EF.Functions.Like(c.Name.ToLower(), $"%{searchDto.Name.ToLower()}%"));
+                return [];
+            }
+
+            IQueryable<Models.Condominium> query = _context.Condominiums
+                .Where(c => EF.Functions.Like(c.Name.ToLower(), $"%{searchDto.Name.ToLower()}%"));
+
+            if (!permissions.CanManageAllCondominiums)
+            {
+                var actorTenantId = await _context.GetActorCondominiumIdAsync(actor.Id);
+                query = query.Where(c => c.Id == actorTenantId);
             }
 
             var condos = await query.ToListAsync();
             return condos.Select(MapToDto).ToList();
         }
 
-        public async Task<CondominiumResponseDTO> Create(CondominiumCreateDTO condoDto)
+        public async Task<CondominiumResponseDTO> Create(CondominiumCreateDTO condoDto, AuthenticatedActor actor)
         {
+            if (!RolePermissions.GetPermissions().TryGetValue(actor.Role, out var permissions) || !permissions.CanRegisterCondominiums)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to register a condominium");
+            }
+
             if (string.IsNullOrEmpty(condoDto.Name))
             {
                 throw new InconsistentDataException("O nome do condomínio é obrigatório");
@@ -146,13 +175,15 @@ namespace SmartCondoApi.Services.Condominium
             return MapToDto(condo);
         }
 
-        public async Task Update(int id, CondominiumUpdateDTO condoDto)
+        public async Task Update(int id, CondominiumUpdateDTO condoDto, AuthenticatedActor actor)
         {
             var condo = await _context.Condominiums.FindAsync(id);
             if (condo == null)
             {
                 throw new CondominiumNotFoundException($"Condomínio com ID {id} não encontrado");
             }
+
+            await EnsureAuthorizedAsync(actor, condo.Id, p => p.CanEditCondominiums, "edit");
 
             if (!string.IsNullOrEmpty(condoDto.Name))
             {
@@ -227,17 +258,19 @@ namespace SmartCondoApi.Services.Condominium
                 }
 
             }
-            
+
             await _context.SaveChangesAsync();
         }
 
-        public async Task Delete(int id)
+        public async Task Delete(int id, AuthenticatedActor actor)
         {
             var condo = await _context.Condominiums.FindAsync(id);
             if (condo == null)
             {
                 throw new CondominiumNotFoundException($"Condomínio com ID {id} não encontrado");
             }
+
+            await EnsureAuthorizedAsync(actor, condo.Id, p => p.CanEditCondominiums, "delete");
 
             // Verifica se existem usuários associados a este condomínio
             var hasUsers = await _context.UserProfiles.AnyAsync(u => u.CondominiumId == id);
@@ -253,6 +286,16 @@ namespace SmartCondoApi.Services.Condominium
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        private async Task EnsureAuthorizedAsync(AuthenticatedActor actor, int resourceCondominiumId, Func<UserPermissionsDTO, bool> hasCapability, string action)
+        {
+            var actorTenantId = await _context.GetActorCondominiumIdAsync(actor.Id);
+
+            if (!ResourceAuthorization.IsAuthorizedInTenant(actor, actorTenantId, resourceCondominiumId, hasCapability))
+            {
+                throw new UnauthorizedAccessException($"You are not authorized to {action} this condominium");
+            }
         }
 
         private static CondominiumResponseDTO MapToDto(Models.Condominium condo)

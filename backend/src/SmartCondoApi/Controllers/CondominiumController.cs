@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartCondoApi.Dto;
 using SmartCondoApi.Exceptions;
+using SmartCondoApi.Infra;
 using SmartCondoApi.Services.Condominium;
 
 namespace SmartCondoApi.Controllers
@@ -15,7 +16,8 @@ namespace SmartCondoApi.Controllers
         [Authorize]
         public async Task<IEnumerable<CondominiumResponseDTO>> Get()
         {
-            return await _condominiumService.Get();
+            var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+            return await _condominiumService.Get(actor);
         }
 
         // Obter um condominio por ID
@@ -25,9 +27,18 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var condo = await _condominiumService.Get(id);
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var condo = await _condominiumService.Get(id, actor);
 
                 return Ok(condo);
+            }
+            catch (CondominiumNotFoundException ex)
+            {
+                return NotFound(new { ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbidden(ex);
             }
             catch (Exception ex)
             {
@@ -43,9 +54,14 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var users = await _condominiumService.SearchUsers(condominiumId, searchDto);
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var users = await _condominiumService.SearchUsers(condominiumId, searchDto, actor);
 
                 return Ok(users);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbidden(ex);
             }
             catch (Exception ex)
             {
@@ -59,7 +75,8 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var condos = await _condominiumService.Search(searchDto);
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var condos = await _condominiumService.Search(searchDto, actor);
                 return Ok(condos);
             }
             catch (InconsistentDataException ex)
@@ -78,12 +95,17 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var condo = await _condominiumService.Create(condoDto);
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                var condo = await _condominiumService.Create(condoDto, actor);
                 return CreatedAtAction(nameof(Get), new { id = condo.Id }, condo);
             }
             catch (InconsistentDataException ex)
             {
                 return BadRequest(new { ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbidden(ex);
             }
             catch (Exception ex)
             {
@@ -97,7 +119,8 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                await _condominiumService.Update(id, condoDto);
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                await _condominiumService.Update(id, condoDto, actor);
                 return NoContent();
             }
             catch (CondominiumNotFoundException ex)
@@ -107,6 +130,10 @@ namespace SmartCondoApi.Controllers
             catch (InconsistentDataException ex)
             {
                 return BadRequest(new { ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbidden(ex);
             }
             catch (Exception ex)
             {
@@ -120,17 +147,35 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                await _condominiumService.Delete(id);
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+                await _condominiumService.Delete(id, actor);
                 return NoContent();
             }
             catch (CondominiumNotFoundException ex)
             {
                 return NotFound(new { ex.Message });
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbidden(ex);
+            }
             catch (Exception ex)
             {
                 return StatusCode(500, new { ex.Message });
             }
+        }
+
+        private static ObjectResult Forbidden(UnauthorizedAccessException ex)
+        {
+            return new ObjectResult(new ProblemDetails
+            {
+                Title = "Forbidden",
+                Detail = ex.Message,
+                Status = StatusCodes.Status403Forbidden
+            })
+            {
+                StatusCode = StatusCodes.Status403Forbidden
+            };
         }
     }
 }
