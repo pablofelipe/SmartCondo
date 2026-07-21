@@ -2,10 +2,8 @@
 using Amazon.Lambda.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
+using SmartCondoApi.Infra;
 using SmartCondoApi.Models;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace SmartCondoApi.Functions
 {
@@ -36,7 +34,7 @@ namespace SmartCondoApi.Functions
                 // raw userId query parameter would let anyone subscribe to any other user's notifications.
                 if (request.QueryStringParameters == null ||
                     !request.QueryStringParameters.TryGetValue("token", out var token) ||
-                    !TryGetUserIdFromToken(token, out var userId))
+                    !WebSocketTokenValidator.TryGetUserId(token, _configuration, out var userId))
                 {
                     return new APIGatewayProxyResponse { StatusCode = 401 };
                 }
@@ -93,46 +91,6 @@ namespace SmartCondoApi.Functions
             {
                 context.Logger.LogError($"Error in DisconnectHandler: {ex.Message}");
                 return new APIGatewayProxyResponse { StatusCode = 500 };
-            }
-        }
-
-        private bool TryGetUserIdFromToken(string? token, out long userId)
-        {
-            userId = 0;
-
-            if (string.IsNullOrEmpty(token))
-            {
-                return false;
-            }
-
-            var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") ?? _configuration["Jwt:Key"];
-
-            if (string.IsNullOrEmpty(jwtKey))
-            {
-                return false;
-            }
-
-            var validationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = _configuration["Jwt:Issuer"],
-                ValidAudience = _configuration["Jwt:Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(jwtKey))
-            };
-
-            try
-            {
-                var principal = new JwtSecurityTokenHandler().ValidateToken(token, validationParameters, out _);
-                var subject = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-                return !string.IsNullOrEmpty(subject) && long.TryParse(subject, out userId);
-            }
-            catch (SecurityTokenException)
-            {
-                return false;
             }
         }
     }

@@ -20,47 +20,8 @@ namespace SmartCondoApi.Services.Notification
 
         public async Task NotifyNewMessageAsync(Models.Message message)
         {
-            // Determinar quais usuários devem receber a notificação
-            List<long> userIdsToNotify = new();
+            var userIdsToNotify = await MessageRecipientResolver.ResolveUserIdsAsync(_context, message);
 
-            switch (message.Scope)
-            {
-                case MessageScope.Condominium:
-                    // Todos os usuários do condomínio
-                    userIdsToNotify = await _context.UserProfiles
-                        .Where(u => u.CondominiumId == message.CondominiumId)
-                        .Select(u => u.Id)
-                        .ToListAsync();
-                    break;
-
-                case MessageScope.Tower:
-                    // Usuários da torre específica
-                    userIdsToNotify = await _context.UserProfiles
-                        .Where(u => u.CondominiumId == message.CondominiumId && u.TowerId == message.TowerId)
-                        .Select(u => u.Id)
-                        .ToListAsync();
-                    break;
-
-                case MessageScope.Floor:
-                    // Usuários do andar específico
-                    userIdsToNotify = await _context.UserProfiles
-                        .Where(u => u.CondominiumId == message.CondominiumId &&
-                                   u.TowerId == message.TowerId &&
-                                   u.FloorNumber == message.FloorId)
-                        .Select(u => u.Id)
-                        .ToListAsync();
-                    break;
-
-                case MessageScope.Individual:
-                    // Usuário específico
-                    if (message.RecipientUserId.HasValue)
-                    {
-                        userIdsToNotify.Add(message.RecipientUserId.Value);
-                    }
-                    break;
-            }
-
-            // Notificar cada usuário via WebSocket
             foreach (var userId in userIdsToNotify)
             {
                 await NotifyUserAsync(userId, message);

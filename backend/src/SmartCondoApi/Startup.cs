@@ -45,6 +45,11 @@ public class Startup
     public static LogLevel ResolveMinimumLogLevel(bool isDevelopment) =>
         isDevelopment ? LogLevel.Debug : LogLevel.Information;
 
+    // AWS Lambda sets this automatically for every invocation - the standard, zero-configuration
+    // signal for "is this process running as a Lambda function" (see ADR-0011).
+    public static bool IsLambdaHosted(string? lambdaFunctionNameEnvironmentVariable) =>
+        !string.IsNullOrEmpty(lambdaFunctionNameEnvironmentVariable);
+
     public void ConfigureServices(IServiceCollection services)
     {
         var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
@@ -178,7 +183,22 @@ public class Startup
         services.AddScoped<IMessageService, MessageService>();
         services.AddScoped<IVehicleService, VehicleService>();
 
-        services.AddScoped<INotificationService, NotificationService>();
+        services.AddSingleton<WebSocketConnectionRegistry>();
+
+        // Lambda mode has its own WebSocket connect/disconnect functions (a separate DI container
+        // in Services/Lambda) tracking connections in the database and pushing through AWS API
+        // Gateway - the AWS-shaped NotificationService is only correct there. Everywhere else
+        // (the container-first, cloud-agnostic path per ADR-0011) uses the native implementation,
+        // which pushes directly over the in-process WebSocket connections this same app accepts.
+        if (IsLambdaHosted(Environment.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME")))
+        {
+            services.AddScoped<INotificationService, NotificationService>();
+        }
+        else
+        {
+            services.AddScoped<INotificationService, NativeWebSocketNotificationService>();
+        }
+
         services.AddScoped<IAuthenticatedActorResolver, AuthenticatedActorResolver>();
 
         services.AddHttpContextAccessor();
@@ -278,6 +298,10 @@ public class Startup
         }
 
         app.UseHttpsRedirection();
+
+        app.UseWebSockets();
+        NativeWebSocketEndpoint.Map(app);
+
         app.UseRouting();
 
         app.UseCors("DynamicCors");
