@@ -27,9 +27,9 @@ SmartCondo/
 ## Features
 
 - **Authentication** — JWT-based login with ASP.NET Core Identity; password reset flow with e-mailed, expiring tokens
-- **Hierarchical permissions** — role seeding and per-endpoint authorization for system administrators, condominium administrators, residents and staff
+- **Hierarchical permissions** — capability/scope/relationship-based authorization for system administrators, condominium administrators, residents and staff (see `docs/adr/0005` onward)
 - **Condominium management** — CRUD for condominiums, towers, apartments and user profiles
-- **Vehicle registry** — resident vehicle management exposed through a GraphQL endpoint (queries, mutations, filtering and projections)
+- **Vehicle registry** — resident vehicle management exposed through a GraphQL endpoint (queries, mutations, filtering)
 - **Messaging** — direct messages between residents and administration, with read tracking
 - **Notifications** — real-time notification delivery through WebSocket connections (AWS API Gateway)
 - **Dashboard** — aggregated statistics for administrators

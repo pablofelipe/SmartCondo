@@ -29,8 +29,8 @@ backend/
 
 - **Controllers** validate input, dispatch to services and translate domain exceptions into HTTP responses (`ErrorHandlingMiddleware` covers anything unhandled).
 - **Services** hold the business rules and are registered per domain area in `Startup.ConfigureServices`. Each service receives its dependencies through constructor injection, which keeps them directly testable with mocks.
-- **Models** are EF Core entities; `SmartCondoContext` also seeds the role/permission hierarchy.
-- **GraphQL** complements REST for the vehicle domain, providing filtered queries with projections.
+- **Models** are EF Core entities; `SmartCondoContext` seeds `UserType` lookup rows (the permission hierarchy itself lives in code, `Models/Permissions/RolePermissions.cs`, read directly at runtime — nothing to seed).
+- **GraphQL** complements REST for the vehicle domain, providing a filtered vehicle query (hand-rolled filtering, not HotChocolate's projection/filtering middleware).
 
 ## Configuration
 

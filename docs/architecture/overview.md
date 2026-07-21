@@ -22,8 +22,9 @@ Controller → Service (business rules) → SmartCondoContext (EF Core) → Post
 ```
 
 - **Controllers** (`Controllers/`) validate the request shape and translate domain exceptions (`Exceptions/`) into HTTP status codes; `ErrorHandlingMiddleware` is the final safety net.
-- **Services** (`Services/`, one folder per domain: Auth, User, Condominium, Message, Vehicle, Email, Notification, Permissions, Crypto, ForgotPassword, LinkGenerator) contain the business logic and are wired through constructor injection.
+- **Services** (`Services/`, one folder per domain: Auth, User, Condominium, Message, Vehicle, Email, Notification, Crypto, ForgotPassword, LinkGenerator) contain the business logic and are wired through constructor injection.
 - **Data** — EF Core entities in `Models/`, schema history in `Migrations/`.
+- **Authorization** — a shared kernel, not per-service logic: `Models/Permissions/ResourceAuthorization` composes Capability (`RolePermissions`), Scope and Relationship against an `AuthenticatedActor` resolved fresh per request by `Infra/IAuthenticatedActorResolver`. See `docs/adr/0005` through `0010` for the full domain model and its evolution.
 
 ## Authentication and authorization
 
@@ -34,20 +35,22 @@ sequenceDiagram
     participant DB as PostgreSQL
 
     C->>A: POST /api/v1/auth/login { user, secret }
-    A->>DB: load user + profile + roles (Identity)
-    A->>A: verify password, account state, e-mail confirmation
+    A->>DB: load user + profile + condominium
+    A->>A: verify password, account state, tenant state, e-mail confirmation
     A-->>C: JWT (HMAC-SHA256) + user profile
     C->>A: subsequent requests with Authorization: Bearer
     A->>A: validate issuer, audience, lifetime, signature
+    A->>DB: re-resolve actor state (account/tenant enabled) via IAuthenticatedActorResolver
 ```
 
-- Identity manages users, roles and password hashing; roles model the hierarchy *system administrator → condominium administrator → resident/staff*.
+- Identity manages users and password hashing. Roles are not modeled through Identity's role store — the JWT carries the role as a plain claim (sourced from `UserType.Name`), and `Models/Permissions/RolePermissions.cs` is the single source of truth for what each role can do; it models the hierarchy *system administrator → condominium administrator → resident/staff*.
 - The JWT signing key is provided via the `JWT_KEY` environment variable (base64, ≥ 32 bytes decoded) — never stored in the repository.
+- Account and tenant state (`User.Enabled`, `Condominium.Enabled`) are checked both at login and on every subsequent authenticated request (`Infra/IAuthenticatedActorResolver`) — a token issued before either is disabled stops working on the very next request, not just at re-login.
 - Password reset issues an expiring token (`PasswordResetToken`) delivered by e-mail; the link points at the frontend, which calls the reset endpoint.
 
 ## GraphQL
 
-The vehicle domain is additionally exposed through HotChocolate at `/graphql` with typed queries, mutations, filter inputs and projections (`GraphQL/`). REST remains the primary protocol for the other resources; the GraphQL module demonstrates schema-first patterns on a bounded slice of the domain.
+The vehicle domain is additionally exposed through HotChocolate at `/graphql` with typed queries, mutations and a filter input (`GraphQL/`). Filtering is hand-rolled LINQ against that input, not HotChocolate's built-in filtering/projection middleware (see ADR-0003). REST remains the primary protocol for the other resources; the GraphQL module demonstrates schema-first patterns on a bounded slice of the domain.
 
 ## Notifications
 
@@ -58,7 +61,7 @@ The vehicle domain is additionally exposed through HotChocolate at `/graphql` wi
 Migrations are EF Core-based. Two application paths exist:
 
 1. `dotnet ef database update` — local development.
-2. `POST /api/v1/migration/migrate` guarded by the `X-Migration-Auth` header (`MIGRATION_AUTH_KEY`) — applies migrations, seeds the role hierarchy and creates the initial administrator (`ADMIN_EMAIL`/`ADMIN_PASSWORD`). This path exists so a serverless deployment can be migrated without shell access.
+2. `POST /api/v1/migration/migrate` guarded by the `X-Migration-Auth` header (`MIGRATION_AUTH_KEY`), compared in constant time — applies migrations and creates the initial administrator (`ADMIN_EMAIL`/`ADMIN_PASSWORD`) if one doesn't already exist. This path exists so a serverless deployment can be migrated without shell access.
 
 ## Deployment modes
 
