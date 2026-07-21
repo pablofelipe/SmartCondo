@@ -1,5 +1,6 @@
 ﻿using Amazon.ApiGatewayManagementApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.StaticFiles;
@@ -181,6 +182,16 @@ public class Startup
 
         services.AddLogging(logging =>
         {
+            // Kestrel/container mode has no default provider once cleared here; Lambda mode never had
+            // one to begin with (LambdaEntryPoint builds its host without Host.CreateDefaultBuilder), so
+            // AddLambdaLogger has always been the only thing making that mode log anything at all.
+            logging.ClearProviders();
+
+            logging.AddJsonConsole(options =>
+            {
+                options.IncludeScopes = true;
+            });
+
             logging.AddLambdaLogger(new LambdaLoggerOptions
             {
                 IncludeCategory = true,
@@ -188,6 +199,16 @@ public class Startup
             });
 
             logging.SetMinimumLevel(LogLevel.Debug);
+        });
+
+        services.AddHttpLogging(options =>
+        {
+            // Deliberately excludes headers and bodies - the default HttpLoggingFields.All would log
+            // the Authorization header (a bearer token) on every request.
+            options.LoggingFields = HttpLoggingFields.RequestMethod
+                | HttpLoggingFields.RequestPath
+                | HttpLoggingFields.ResponseStatusCode
+                | HttpLoggingFields.Duration;
         });
 
         services.AddGraphQLServer()
@@ -235,6 +256,8 @@ public class Startup
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
+        app.UseMiddleware<CorrelationIdLoggingMiddleware>();
+        app.UseHttpLogging();
         app.UseMiddleware<ErrorHandlingMiddleware>();
 
         if (env.IsDevelopment())
