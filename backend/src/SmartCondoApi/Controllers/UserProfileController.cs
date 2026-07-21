@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SmartCondoApi.Dto;
 using SmartCondoApi.Exceptions;
-using System.Security.Claims;
+using SmartCondoApi.Infra;
 
 namespace SmartCondoApi.Controllers
 {
@@ -17,9 +17,9 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var callerRole = User.FindFirst(ClaimTypes.Role)?.Value;
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
 
-                var userProfileResponseDTO = await _dependencies.UserProfileService.Add(userCreateDTO, callerRole);
+                var userProfileResponseDTO = await _dependencies.UserProfileService.Add(userCreateDTO, actor);
 
                 var _logger = _dependencies.Logger;
 
@@ -81,20 +81,25 @@ namespace SmartCondoApi.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return new ObjectResult(new ProblemDetails
-                {
-                    Title = "Forbidden",
-                    Detail = ex.Message,
-                    Status = StatusCodes.Status403Forbidden
-                })
-                {
-                    StatusCode = StatusCodes.Status403Forbidden
-                };
+                return Forbidden(ex);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = $"Ocorreu um erro interno. Mensagem: {ex.Message}" });
             }
+        }
+
+        private static ObjectResult Forbidden(UnauthorizedAccessException ex)
+        {
+            return new ObjectResult(new ProblemDetails
+            {
+                Title = "Forbidden",
+                Detail = ex.Message,
+                Status = StatusCodes.Status403Forbidden
+            })
+            {
+                StatusCode = StatusCodes.Status403Forbidden
+            };
         }
 
         // Confirmação do email para finalização do cadastro de usuário
@@ -129,7 +134,9 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var userResponseDTO = await _dependencies.UserProfileService.Update(id, updatedUser);
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+
+                var userResponseDTO = await _dependencies.UserProfileService.Update(id, updatedUser, actor);
                 return Ok(userResponseDTO);
             }
             catch (InvalidCredentialsException ex)
@@ -139,6 +146,10 @@ namespace SmartCondoApi.Controllers
             catch (UserNotFoundException ex)
             {
                 return NotFound(new { ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbidden(ex);
             }
             catch (Exception ex)
             {
@@ -161,13 +172,19 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                var user = await _dependencies.UserProfileService.Get(id);
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+
+                var user = await _dependencies.UserProfileService.Get(id, actor);
 
                 return Ok(user);
             }
             catch (UserNotFoundException ex)
             {
                 return NotFound(new { ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbidden(ex);
             }
             catch (Exception ex)
             {
@@ -182,13 +199,19 @@ namespace SmartCondoApi.Controllers
         {
             try
             {
-                await _dependencies.UserProfileService.Delete(id);
+                var actor = AuthenticatedActorFactory.FromClaimsPrincipal(User);
+
+                await _dependencies.UserProfileService.Delete(id, actor);
 
                 return Ok();
             }
             catch (UserNotFoundException ex)
             {
                 return NotFound(new { ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbidden(ex);
             }
             catch (Exception ex)
             {

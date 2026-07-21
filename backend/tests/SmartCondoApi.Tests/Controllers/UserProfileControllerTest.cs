@@ -209,6 +209,97 @@ namespace SmartCondoApi.Tests.Controllers
             Console.WriteLine("AddUserWithUnknownCallerRoleIsForbidden: " + result.Value);
         }
 
+        [TestMethod]
+        public async Task GetOwnProfileSuccessWithoutViewCapability()
+        {
+            Console.WriteLine("GetOwnProfileSuccessWithoutViewCapability begin");
+
+            var userProfileController = LoadUserProfileController("Resident", 3);
+
+            var result = await userProfileController.GetUser(3);
+
+            var okResult = SuccessAssert(result);
+            Console.WriteLine("GetOwnProfileSuccessWithoutViewCapability: " + okResult.Value);
+        }
+
+        [TestMethod]
+        public async Task GetOtherProfileForbiddenWithoutViewCapability()
+        {
+            Console.WriteLine("GetOtherProfileForbiddenWithoutViewCapability begin");
+
+            var userProfileController = LoadUserProfileController("Resident", 3);
+
+            var result = await userProfileController.GetUser(4);
+
+            var forbiddenResult = ForbiddenAssert(result, "not authorized to view");
+            Console.WriteLine("GetOtherProfileForbiddenWithoutViewCapability: " + forbiddenResult!.Value);
+        }
+
+        [TestMethod]
+        public async Task UpdateOwnNameSuccessWithoutEditCapability()
+        {
+            Console.WriteLine("UpdateOwnNameSuccessWithoutEditCapability begin");
+
+            var userProfileController = LoadUserProfileController("Resident", 3);
+
+            var result = await userProfileController.UpdateUser(3, new UserProfileUpdateDTO { Name = "Updated Resident Name" });
+
+            var okResult = SuccessAssert(result);
+            Console.WriteLine("UpdateOwnNameSuccessWithoutEditCapability: " + okResult.Value);
+        }
+
+        [TestMethod]
+        public async Task UpdateOwnHousingAssignmentForbiddenWithoutAdminCapability()
+        {
+            Console.WriteLine("UpdateOwnHousingAssignmentForbiddenWithoutAdminCapability begin");
+
+            var userProfileController = LoadUserProfileController("Resident", 3);
+
+            var result = await userProfileController.UpdateUser(3, new UserProfileUpdateDTO { CondominiumId = 2 });
+
+            var forbiddenResult = ForbiddenAssert(result, "administrator can change housing assignment");
+            Console.WriteLine("UpdateOwnHousingAssignmentForbiddenWithoutAdminCapability: " + forbiddenResult!.Value);
+        }
+
+        [TestMethod]
+        public async Task UpdateOtherProfileForbiddenWithoutEditCapability()
+        {
+            Console.WriteLine("UpdateOtherProfileForbiddenWithoutEditCapability begin");
+
+            var userProfileController = LoadUserProfileController("Resident", 3);
+
+            var result = await userProfileController.UpdateUser(4, new UserProfileUpdateDTO { Name = "Hijacked Name" });
+
+            var forbiddenResult = ForbiddenAssert(result, "not authorized to edit");
+            Console.WriteLine("UpdateOtherProfileForbiddenWithoutEditCapability: " + forbiddenResult!.Value);
+        }
+
+        [TestMethod]
+        public async Task DeleteOwnProfileForbiddenSelfServiceNotAllowed()
+        {
+            Console.WriteLine("DeleteOwnProfileForbiddenSelfServiceNotAllowed begin");
+
+            var userProfileController = LoadUserProfileController("Resident", 3);
+
+            var result = await userProfileController.Delete(3);
+
+            var forbiddenResult = ForbiddenAssert(result, "not authorized to delete");
+            Console.WriteLine("DeleteOwnProfileForbiddenSelfServiceNotAllowed: " + forbiddenResult!.Value);
+        }
+
+        [TestMethod]
+        public async Task DeleteProfileSuccessWithAdminCapability()
+        {
+            Console.WriteLine("DeleteProfileSuccessWithAdminCapability begin");
+
+            var userProfileController = LoadUserProfileController("CondominiumAdministrator", 2);
+
+            var result = await userProfileController.Delete(3);
+
+            Assert.IsInstanceOfType(result, typeof(OkResult));
+            Console.WriteLine("DeleteProfileSuccessWithAdminCapability: done");
+        }
+
         private async Task<BadRequestObjectResult> PerformBadRequestAddUserTest(UserProfileCreateDTO userCreateDTO, string message)
         {
             var userProfileController = LoadUserProfileController();

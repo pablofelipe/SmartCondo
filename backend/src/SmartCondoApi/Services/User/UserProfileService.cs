@@ -9,7 +9,7 @@ namespace SmartCondoApi.Services.User
 {
     public class UserProfileService(IUserProfileServiceDependencies _dependencies, ILogger<UserProfileService> _logger) : IUserProfileService
     {
-        public async Task<UserProfileResponseDTO> Add(UserProfileCreateDTO userCreateDTO, string? callerRole)
+        public async Task<UserProfileResponseDTO> Add(UserProfileCreateDTO userCreateDTO, AuthenticatedActor actor)
         {
             // Valida o CPF/CNPJ
             if (!ValidateRegistrationNumber(userCreateDTO.RegistrationNumber))
@@ -43,7 +43,7 @@ namespace SmartCondoApi.Services.User
                 throw new ArgumentException($"Tipo de usuário {userCreateDTO.UserTypeId} não encontrado");
             }
 
-            EnsureCallerCanRegister(callerRole, userTypes.Name);
+            EnsureCallerCanRegister(actor.Role, userTypes.Name);
 
             var condo = await context.Condominiums.FirstOrDefaultAsync(c => c.Id == userCreateDTO.CondominiumId);
 
@@ -249,7 +249,7 @@ namespace SmartCondoApi.Services.User
             return new RegistrationNumberValidator().Verify(registrationNumber);
         }
 
-        public async Task<UserProfileResponseDTO> Update(long userId, UserProfileUpdateDTO userUpdateDTO)
+        public async Task<UserProfileResponseDTO> Update(long userId, UserProfileUpdateDTO userUpdateDTO, AuthenticatedActor actor)
         {
             if (null == userUpdateDTO)
             {
@@ -264,6 +264,24 @@ namespace SmartCondoApi.Services.User
 
             if (null == userProfile)
                 throw new UserNotFoundException("Usuário não encontrado.");
+
+            var isSelf = actor.Id == userProfile.Id;
+            var hasEditCapability = RolePermissions.GetPermissions().TryGetValue(actor.Role, out var callerPermissions) && callerPermissions.CanEditUsers;
+
+            if (!isSelf && !hasEditCapability)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to edit this profile");
+            }
+
+            var changesHousingAssignment = userUpdateDTO.CondominiumId.HasValue
+                || userUpdateDTO.TowerId.HasValue
+                || userUpdateDTO.FloorId.HasValue
+                || userUpdateDTO.Apartment.HasValue;
+
+            if (changesHousingAssignment && !hasEditCapability)
+            {
+                throw new UnauthorizedAccessException("Only an administrator can change housing assignment");
+            }
 
             if (userUpdateDTO.Name != null) userProfile.Name = userUpdateDTO.Name;
             if (userUpdateDTO.Address != null) userProfile.Address = userUpdateDTO.Address;
@@ -312,12 +330,17 @@ namespace SmartCondoApi.Services.User
             return await _dependencies.Context.UserProfiles.ToListAsync();
         }
 
-        public async Task<UserProfileEditDTO> Get(long id)
+        public async Task<UserProfileEditDTO> Get(long id, AuthenticatedActor actor)
         {
             var userProfile = await _dependencies.Context.UserProfiles.FindAsync(id);
             if (userProfile == null)
             {
                 throw new UserNotFoundException("Perfil de usuário não encontrado.");
+            }
+
+            if (!ResourceAuthorization.IsAuthorized(actor, userProfile.Id, p => p.CanViewUsers))
+            {
+                throw new UnauthorizedAccessException("You are not authorized to view this profile");
             }
 
             var user = await _dependencies.UserManager.FindByIdAsync(id.ToString());
@@ -348,7 +371,7 @@ namespace SmartCondoApi.Services.User
             return dto;
         }
 
-        public async Task Delete(long id)
+        public async Task Delete(long id, AuthenticatedActor actor)
         {
             if (id < 1)
             {
@@ -359,6 +382,13 @@ namespace SmartCondoApi.Services.User
             if (userProfile == null)
             {
                 throw new UserNotFoundException("Usuário não encontrado.");
+            }
+
+            var hasEditCapability = RolePermissions.GetPermissions().TryGetValue(actor.Role, out var callerPermissions) && callerPermissions.CanEditUsers;
+
+            if (!hasEditCapability)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to delete this profile");
             }
 
             if (null != userProfile.User)

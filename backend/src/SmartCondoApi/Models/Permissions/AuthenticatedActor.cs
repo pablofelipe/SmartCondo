@@ -1,0 +1,4 @@
+namespace SmartCondoApi.Models.Permissions
+{
+    public sealed record AuthenticatedActor(long Id, string Role);
+}
