@@ -1,0 +1,10 @@
+.git
+**/node_modules
+**/bin
+**/obj
+frontend/build
+backend/tests
+docs
+*.md
+.env
+.env.example
