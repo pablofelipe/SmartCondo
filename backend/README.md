@@ -77,7 +77,7 @@ curl -X POST http://localhost:5000/api/v1/migration/migrate \
 dotnet test SmartCondo.sln
 ```
 
-Tests use MSTest with Moq and the EF Core InMemory provider — no external services required.
+Most tests use MSTest with Moq and the EF Core InMemory provider — no external services required. `tests/SmartCondoApi.Tests/Integration/PostgresIntegrationTest.cs` is the exception: it runs real migrations and cascade-delete behavior against a PostgreSQL container started via Testcontainers, and needs a local Docker daemon.
 
 ## Deployment
 
