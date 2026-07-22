@@ -86,7 +86,7 @@ namespace SmartCondoApi.Controllers
             catch (Exception ex)
             {
                 _dependencies.Logger.LogError(ex, "Unhandled exception in {Controller}", nameof(UserProfileController));
-                return StatusCode(500, new { error = "An unexpected error occurred" });
+                return StatusCode(500, new { message = "An unexpected error occurred" });
             }
         }
 
@@ -125,7 +125,7 @@ namespace SmartCondoApi.Controllers
             catch (Exception ex)
             {
                 _dependencies.Logger.LogError(ex, "Unhandled exception in {Controller}", nameof(UserProfileController));
-                return StatusCode(500, new { error = "An unexpected error occurred" });
+                return StatusCode(500, new { message = "An unexpected error occurred" });
             }
         }
 
@@ -156,7 +156,7 @@ namespace SmartCondoApi.Controllers
             catch (Exception ex)
             {
                 _dependencies.Logger.LogError(ex, "Unhandled exception in {Controller}", nameof(UserProfileController));
-                return StatusCode(500, new { error = "An unexpected error occurred" });
+                return StatusCode(500, new { message = "An unexpected error occurred" });
             }
         }
 
@@ -192,7 +192,7 @@ namespace SmartCondoApi.Controllers
             catch (Exception ex)
             {
                 _dependencies.Logger.LogError(ex, "Unhandled exception in {Controller}", nameof(UserProfileController));
-                return StatusCode(500, new { error = "An unexpected error occurred" });
+                return StatusCode(500, new { message = "An unexpected error occurred" });
             }
         }
 
@@ -220,7 +220,7 @@ namespace SmartCondoApi.Controllers
             catch (Exception ex)
             {
                 _dependencies.Logger.LogError(ex, "Unhandled exception in {Controller}", nameof(UserProfileController));
-                return StatusCode(500, new { error = "An unexpected error occurred" });
+                return StatusCode(500, new { message = "An unexpected error occurred" });
             }
         }
     }

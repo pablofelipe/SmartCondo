@@ -45,7 +45,7 @@ namespace SmartCondoApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unhandled exception in {Controller}", nameof(MessagesController));
-                return StatusCode(500, new { error = "An unexpected error occurred" });
+                return StatusCode(500, new { message = "An unexpected error occurred" });
             }
         }
 

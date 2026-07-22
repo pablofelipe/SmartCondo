@@ -22,18 +22,18 @@ namespace SmartCondoApi.Infra
             catch (MessageNotFoundException ex)
             {
                 context.Response.StatusCode = StatusCodes.Status404NotFound;
-                await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+                await context.Response.WriteAsJsonAsync(new { message = ex.Message });
             }
             catch (UnauthorizedAccessException ex)
             {
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+                await context.Response.WriteAsJsonAsync(new { message = ex.Message });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unhandled exception on {Method} {Path}", context.Request.Method, context.Request.Path);
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                await context.Response.WriteAsJsonAsync(new { error = "An unexpected error occurred" });
+                await context.Response.WriteAsJsonAsync(new { message = "An unexpected error occurred" });
             }
         }
     }
