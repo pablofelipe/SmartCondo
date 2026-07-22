@@ -117,10 +117,8 @@ The canonical deployment target is a single Docker image, run unmodified on eith
 - Multi-cloud infrastructure as code (Terraform, Azure Container Apps + AWS ECS/Fargate) — ADR-0011
 - Native in-process WebSocket notifications for container hosting, replacing AWS API Gateway as the default path
 - Generic SMTP e-mail delivery, replacing AWS SES
-
-**Planned:**
-- [ ] Integration tests against a real PostgreSQL instance (Testcontainers)
-- [ ] Wire frontend tests into CI
+- Integration tests against a real PostgreSQL instance (Testcontainers)
+- Frontend tests wired into CI
 
 **Non-goals (deliberate, see [trade-offs](docs/architecture/overview.md#trade-offs)):**
 - Kubernetes, a metrics/tracing stack (Prometheus/Grafana), asynchronous messaging, additional cloud providers, CI/CD automation of the deploy
