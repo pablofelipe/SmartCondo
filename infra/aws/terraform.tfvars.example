@@ -1,0 +1,6 @@
+image_uri           = "public.ecr.aws/your-alias/smartcondo-backend:latest"
+db_password         = "change-me"
+jwt_key             = "base64-string-decoding-to-32-plus-bytes"
+migration_auth_key  = "change-me"
+admin_password      = "change-me"
+desired_count       = 0

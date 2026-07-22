@@ -45,7 +45,11 @@ The user confirmed dropping AWS SES entirely in favor of a single generic-SMTP e
 
 ## Deferred decisions
 
-**IaC tooling (Terraform, Bicep, CDK, or a manual runbook).** Not chosen yet. Deferred until the canonical image and native WebSocket path exist — choosing the tool before there's a concrete thing to automate risks exactly the "800 lines of Terraform thrown away after changing target" failure mode. Revisit once both deploys are manually proven.
+**IaC tooling (Terraform, Bicep, CDK, or a manual runbook).** ~~Not chosen yet.~~ **Resolved (2026-07-22):** both deploys were proven manually first, per this section's own reopening criterion. Azure Container Apps + PostgreSQL Flexible Server, and AWS ECS/Fargate + RDS, were each provisioned by hand, validated end to end (health checks, migration, login, an authenticated WebSocket round trip), and only then codified — closing exactly the risk this section originally flagged, since every resource, parameter, and gotcha (missing CloudWatch log-group permission, RDS security-group ingress, Container Apps' automatic Log Analytics workspace) was already known before a line of Terraform was written.
+
+Terraform was chosen over Bicep/CDK/SAM specifically because it is the only option that covers both providers with one tool — Bicep is Azure-only, CDK/SAM is AWS-only, and using a single tool across both clouds reinforces the portability story this ADR is about rather than undermining it with two unrelated toolchains. Two independent root modules, `infra/azure/` and `infra/aws/`, each with their own state — not one cross-cloud abstraction — matching the two-consumer/concrete-coupling discipline: the two providers' resource models are different enough that a unifying abstraction would only be complexity for its own sake.
+
+The IaC was validated the same way the manual deploys were: the manually-created resources were destroyed, then recreated from `terraform apply` alone, and re-validated (health checks, migration, login) before being torn down again — proving the Terraform is sufficient by itself, not merely a written record of what was done by hand.
 
 **CI/CD automation of the deploy.** Out of scope. The near-term goal is a documented, reproducible *manual* path under 30 minutes, not push-button automation — revisit only if the manual path becomes a repeated friction point.
 

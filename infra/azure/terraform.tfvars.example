@@ -1,0 +1,5 @@
+docker_image        = "yourdockerhubuser/smartcondo-backend:latest"
+db_admin_password   = "change-me"
+jwt_key             = "base64-string-decoding-to-32-plus-bytes"
+migration_auth_key  = "change-me"
+admin_password      = "change-me"
