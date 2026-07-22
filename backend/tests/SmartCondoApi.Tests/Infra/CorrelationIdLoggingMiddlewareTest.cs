@@ -55,5 +55,60 @@ namespace SmartCondoApi.Tests.Infra
 
             Assert.AreNotEqual(firstId, secondId);
         }
+
+        [TestMethod]
+        public async Task InboundCorrelationIdHeader_IsEchoedBackInResponse()
+        {
+            var server = await BuildServerAsync();
+            var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("X-Correlation-Id", "caller-supplied-id-123");
+
+            var response = await client.GetAsync("/anything");
+
+            var value = response.Headers.GetValues("X-Correlation-Id").Single();
+            Assert.AreEqual("caller-supplied-id-123", value);
+        }
+
+        [TestMethod]
+        public async Task EmptyInboundCorrelationIdHeader_FallsBackToGeneratedId()
+        {
+            var server = await BuildServerAsync();
+            var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("X-Correlation-Id", "");
+
+            var response = await client.GetAsync("/anything");
+
+            var value = response.Headers.GetValues("X-Correlation-Id").Single();
+            Assert.IsFalse(string.IsNullOrWhiteSpace(value));
+            Assert.AreNotEqual("", value);
+        }
+
+        [TestMethod]
+        public async Task OversizedInboundCorrelationIdHeader_FallsBackToGeneratedId()
+        {
+            var server = await BuildServerAsync();
+            var client = server.CreateClient();
+            var oversized = new string('a', 200);
+            client.DefaultRequestHeaders.Add("X-Correlation-Id", oversized);
+
+            var response = await client.GetAsync("/anything");
+
+            var value = response.Headers.GetValues("X-Correlation-Id").Single();
+            Assert.AreNotEqual(oversized, value);
+        }
+
+        [TestMethod]
+        public async Task InboundCorrelationIdHeader_WithControlCharacters_FallsBackToGeneratedId()
+        {
+            var server = await BuildServerAsync();
+            var client = server.CreateClient();
+            var withControlChar = "badid";
+            client.DefaultRequestHeaders.TryAddWithoutValidation("X-Correlation-Id", withControlChar);
+
+            var response = await client.GetAsync("/anything");
+
+            var value = response.Headers.GetValues("X-Correlation-Id").Single();
+            Assert.AreNotEqual(withControlChar, value);
+        }
     }
 }
