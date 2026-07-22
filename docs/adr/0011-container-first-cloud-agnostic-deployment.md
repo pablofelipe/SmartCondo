@@ -6,7 +6,7 @@
 
 A second independent architecture audit (2026-07-21) found the widest gap in the system between what is documented and what actually works: SmartCondo advertises a dual-hosted, serverless-capable backend, but there is no Infrastructure-as-Code of any kind and no documented, reproducible path to production. `docker-compose.yml` is dev-only (hardcodes `ASPNETCORE_ENVIRONMENT=Development`); `aws-lambda-tools-defaults.json` is enough to `dotnet lambda deploy-function` but defines none of the surrounding infrastructure (API Gateway REST *and* WebSocket, RDS, IAM, secrets) the Lambda path actually requires to run.
 
-Rather than closing this gap by picking a single deployment target, the goal was reframed: use the deployment story itself to demonstrate multi-cloud architectural competence, motivated by the AWS surface already being well-exercised (Lambda, API Gateway, WebSocket API, SES, RDS, IAM) and Azure being a deliberate learning target.
+Rather than closing this gap by picking a single deployment target, the decision was to validate the "cloud-agnostic" claim on two independent clouds rather than one. A portability claim proven only on the cloud the code was already written against (AWS — Lambda, API Gateway, WebSocket API, SES, RDS, IAM all appear in the existing codebase) isn't actually proven; a second, independent cloud with no prior AWS-specific assumptions baked in is the only way to test it.
 
 A real-coupling survey (evidence-based — grep and direct reads, not the audit's prose) found the system's actual AWS coupling is narrower than it looks:
 - **Genuinely coupled, live paths:** `EmailService.SendEmailAsync` calls AWS SES directly (`AmazonSimpleEmailServiceClient`, hardcoded `sa-east-1`); `NotificationService` pushes exclusively through `IAmazonApiGatewayManagementApi.PostToConnectionAsync`, a mechanism that only exists because Lambda cannot hold a persistent connection itself.
@@ -39,7 +39,7 @@ The user confirmed dropping AWS SES entirely in favor of a single generic-SMTP e
 
 - The only two genuine AWS runtime couplings identified by the survey (SES, API-Gateway-Management push) are both closed for the primary deployment path — the container image has zero AWS SDK dependency in its live code paths.
 - Choosing Azure vs. AWS for the primary path becomes purely an infrastructure and configuration difference (container host, managed Postgres, secrets injection) — provable by literally redeploying the same image, not by a code branch or feature flag.
-- Lambda mode's previously-flagged "dual DI container" concern is downgraded in priority by construction: it now only affects a secondary, explicitly-non-portable mode, not the system's primary demonstrated story.
+- Lambda mode's previously-flagged "dual DI container" concern is downgraded in priority by construction: it now only affects a secondary, explicitly-non-portable mode, not the system's primary deployment path.
 - No IaC tool is chosen by this ADR — that's a deferred, implementation-level decision (see below).
 - This does not attempt feature parity between hosting modes going forward. If Lambda mode drifts from the container path over time, that is an accepted, named tradeoff of this decision, not an oversight to flag later.
 
