@@ -37,7 +37,7 @@ const VehicleForm = ({
   const isViewMode = mode == 'view';
   const [ownerUserId, setOwnerUserId] = useState<number | null>(null);
 
-  // Definindo o tipo de dados do veículo
+  // Vehicle data shape
   interface VehicleData {
     id?: string;
     type: VehicleType;
@@ -59,7 +59,7 @@ const VehicleForm = ({
     userId: userId || 0,
   });
 
-  // Estados de loading
+  // Loading state
   const [loading, setLoading] = useState({
     submit: false,
     update: false,
@@ -92,7 +92,7 @@ const VehicleForm = ({
     navigate(ownerUserId ? `/users/${ownerUserId}/view` : '/vehicles');
   };
 
-  // Consultas GraphQL
+  // GraphQL queries
   const { loading: vehicleLoading } = useQuery(GET_VEHICLE, {
     variables: { id: String(vehicleId) },
     skip: mode == 'create' || !vehicleId,
@@ -107,9 +107,9 @@ const VehicleForm = ({
       }
     },
     onError: (error) => {
-      console.error('Erro GET_VEHICLE:', JSON.stringify(error, null, 2));
+      console.error('GET_VEHICLE error:', JSON.stringify(error, null, 2));
       setMessage({
-        text: `Erro ao carregar veículo: ${error.message}`,
+        text: `Failed to load vehicle: ${error.message}`,
         type: 'error',
       });
     },
@@ -125,16 +125,16 @@ const VehicleForm = ({
     },
   });
 
-  // Mutations GraphQL
+  // GraphQL mutations
   const [createVehicle] = useMutation(CREATE_VEHICLE, {
     onCompleted: () => {
-      setMessage({ text: 'Veículo criado com sucesso', type: 'success' });
+      setMessage({ text: 'Vehicle created successfully', type: 'success' });
       handleGoToDashboard();
     },
     onError: (error) => {
-      console.error('Erro CREATE_VEHICLE:', JSON.stringify(error, null, 2));
+      console.error('CREATE_VEHICLE error:', JSON.stringify(error, null, 2));
       setMessage({
-        text: `Erro ao criar veículo: ${error.message}`,
+        text: `Failed to create vehicle: ${error.message}`,
         type: 'error',
       });
     },
@@ -142,12 +142,12 @@ const VehicleForm = ({
 
   const [updateVehicle] = useMutation(UPDATE_VEHICLE, {
     onCompleted: () => {
-      setMessage({ text: 'Veículo atualizado com sucesso', type: 'success' });
+      setMessage({ text: 'Vehicle updated successfully', type: 'success' });
     },
     onError: (error) => {
-      console.error('Erro UPDATE_VEHICLE:', JSON.stringify(error, null, 2));
+      console.error('UPDATE_VEHICLE error:', JSON.stringify(error, null, 2));
       setMessage({
-        text: `Erro ao atualizar veículo: ${error.message}`,
+        text: `Failed to update vehicle: ${error.message}`,
         type: 'error',
       });
     },
@@ -155,13 +155,13 @@ const VehicleForm = ({
 
   const [deleteVehicle] = useMutation(DELETE_VEHICLE, {
     onCompleted: () => {
-      setMessage({ text: 'Veículo deletado com sucesso', type: 'success' });
+      setMessage({ text: 'Vehicle deleted successfully', type: 'success' });
       handleGoToDashboard();
     },
     onError: (error) => {
-      console.error('Erro DELETE_VEHICLE:', JSON.stringify(error, null, 2));
+      console.error('DELETE_VEHICLE error:', JSON.stringify(error, null, 2));
       setMessage({
-        text: `Erro ao deletar veículo: ${error.message}`,
+        text: `Failed to delete vehicle: ${error.message}`,
         type: 'error',
       });
     },
@@ -196,19 +196,19 @@ const VehicleForm = ({
       case 'licensePlate':
         newErrors.licensePlate =
           !value || value.length < 6
-            ? 'Placa deve ter pelo menos 6 caracteres'
+            ? 'License plate must have at least 6 characters'
             : '';
         break;
       case 'brand':
         newErrors.brand =
-          !value || value.length < 2 ? 'Marca é obrigatória' : '';
+          !value || value.length < 2 ? 'Brand is required' : '';
         break;
       case 'model':
         newErrors.model =
-          !value || value.length < 1 ? 'Modelo é obrigatório' : '';
+          !value || value.length < 1 ? 'Model is required' : '';
         break;
       case 'color':
-        newErrors.color = !value || value.length < 3 ? 'Cor é obrigatória' : '';
+        newErrors.color = !value || value.length < 3 ? 'Color is required' : '';
         break;
       default:
         break;
@@ -218,7 +218,7 @@ const VehicleForm = ({
   };
 
   const handleDelete = async () => {
-    // Se já está carregando, não faz nada
+    // Already loading, do nothing
     if (loading.delete || !vehicleId) return;
 
     setLoading((prev) => ({ ...prev, delete: true }));
@@ -226,7 +226,7 @@ const VehicleForm = ({
     try {
       await deleteVehicle({ variables: { id: vehicleId } });
     } catch (error) {
-      console.error('Erro ao deletar veículo:', error);
+      console.error('Failed to delete vehicle:', error);
     } finally {
       setLoading((prev) => ({ ...prev, delete: false }));
       setIsDeleteModalOpen(false);
@@ -252,7 +252,7 @@ const VehicleForm = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Se já está carregando, não faz nada
+    // Already loading, do nothing
     if (loading.submit) return;
 
     if (!validateForm()) return;
@@ -267,12 +267,12 @@ const VehicleForm = ({
 
     try {
       await createVehicle({ variables: { input } });
-      // Redirecionamento após sucesso
+      // Redirect after success
       navigate(userId ? `/users/${userId}/view` : '/vehicles');
     } catch (error) {
-      console.error('Erro na cadastro de veiculos:', error);
+      console.error('Failed to register vehicle:', error);
       setMessage({
-        text: 'Erro ao cadastrar veiculos',
+        text: 'Failed to register vehicle',
         type: 'error',
       });
     } finally {
@@ -283,7 +283,7 @@ const VehicleForm = ({
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Se já está carregando, não faz nada
+    // Already loading, do nothing
     if (loading.update || !vehicleId) return;
 
     if (!validateForm()) return;
@@ -304,21 +304,21 @@ const VehicleForm = ({
     try {
       await updateVehicle({ variables: { id: vehicleId, input } });
     } catch (error) {
-      console.error('Erro ao atualizar veículo:', error);
+      console.error('Failed to update vehicle:', error);
     } finally {
       setLoading((prev) => ({ ...prev, update: false }));
     }
   };
 
   const vehicleTypeOptions = [
-    { value: VehicleType.Car, label: 'Carro' },
-    { value: VehicleType.Motorcycle, label: 'Moto' },
-    { value: VehicleType.Truck, label: 'Caminhão' },
-    { value: VehicleType.Other, label: 'Outro' },
+    { value: VehicleType.Car, label: 'Car' },
+    { value: VehicleType.Motorcycle, label: 'Motorcycle' },
+    { value: VehicleType.Truck, label: 'Truck' },
+    { value: VehicleType.Other, label: 'Other' },
   ];
 
   if (vehicleLoading || ownerLoading) {
-    return <div>Carregando...</div>;
+    return <div>Loading...</div>;
   }
 
   return (
@@ -328,16 +328,16 @@ const VehicleForm = ({
           <form onSubmit={mode == 'create' ? handleSubmit : handleUpdate}>
             <span className="main-form-title">
               {mode == 'create'
-                ? 'Cadastro de Veículo'
+                ? 'Vehicle Registration'
                 : mode == 'edit'
-                ? 'Editar Veículo'
-                : 'Detalhes do Veículo'}
+                ? 'Edit Vehicle'
+                : 'Vehicle Details'}
             </span>
 
             {/* Owner information (if available) */}
             {ownerDetails && (
               <div className="wrap-input100">
-                <label className="input-label">Proprietário</label>
+                <label className="input-label">Owner</label>
                 <Link
                   to={`/users/${ownerDetails.id}/view`}
                   className="owner-link"
@@ -351,7 +351,7 @@ const VehicleForm = ({
             {/* Vehicle Type */}
             <div className="wrap-input100 validate-input">
               <label htmlFor="type" className="input-label">
-                Tipo de Veículo
+                Vehicle Type
               </label>
               <select
                 className={`input100 ${vehicleData.type ? 'has-val' : ''}`}
@@ -382,7 +382,7 @@ const VehicleForm = ({
                 required
                 disabled={isViewMode}
               />
-              <span className="focus-input100" data-placeholder="Placa"></span>
+              <span className="focus-input100" data-placeholder="License Plate"></span>
               {errors.licensePlate && (
                 <p className="error-message">{errors.licensePlate}</p>
               )}
@@ -400,7 +400,7 @@ const VehicleForm = ({
                 required
                 disabled={isViewMode}
               />
-              <span className="focus-input100" data-placeholder="Marca"></span>
+              <span className="focus-input100" data-placeholder="Brand"></span>
               {errors.brand && <p className="error-message">{errors.brand}</p>}
             </div>
 
@@ -416,7 +416,7 @@ const VehicleForm = ({
                 required
                 disabled={isViewMode}
               />
-              <span className="focus-input100" data-placeholder="Modelo"></span>
+              <span className="focus-input100" data-placeholder="Model"></span>
               {errors.model && <p className="error-message">{errors.model}</p>}
             </div>
 
@@ -432,7 +432,7 @@ const VehicleForm = ({
                 required
                 disabled={isViewMode}
               />
-              <span className="focus-input100" data-placeholder="Cor"></span>
+              <span className="focus-input100" data-placeholder="Color"></span>
               {errors.color && <p className="error-message">{errors.color}</p>}
             </div>
 
@@ -451,7 +451,7 @@ const VehicleForm = ({
                 style={{ width: 'auto', marginRight: '10px' }}
               />
               <label htmlFor="enabled" style={{ marginBottom: 0 }}>
-                Ativo
+                Active
               </label>
             </div>
 
@@ -465,10 +465,10 @@ const VehicleForm = ({
                     disabled={loading.submit || loading.update}
                   >
                     {loading.submit || loading.update
-                      ? 'Carregando...'
+                      ? 'Loading...'
                       : mode == 'create'
-                      ? 'Cadastrar'
-                      : 'Atualizar'}
+                      ? 'Register'
+                      : 'Update'}
                   </button>
                 </div>
               </div>
@@ -490,7 +490,7 @@ const VehicleForm = ({
                     onClick={() => setIsDeleteModalOpen(true)}
                     disabled={loading.delete}
                   >
-                    {loading.delete ? 'Deletando...' : 'Deletar'}
+                    {loading.delete ? 'Deleting...' : 'Delete'}
                   </button>
                 </div>
               </div>
@@ -503,8 +503,8 @@ const VehicleForm = ({
                 onClick={handleGoBack}
               >
                 {ownerUserId
-                  ? 'Voltar ao Proprietário'
-                  : 'Voltar à Lista de Veículos'}
+                  ? 'Back to Owner'
+                  : 'Back to Vehicle List'}
               </span>
             </div>
           </form>
@@ -515,11 +515,11 @@ const VehicleForm = ({
               style={{ cursor: 'pointer' }}
               onClick={handleGoToDashboard}
             >
-              Voltar ao Dashboard
+              Back to Dashboard
             </span>
           </div>
 
-          {/* Exibir mensagem */}
+          {/* Display message */}
           {message && (
             <div className={`message ${message.type} text-center`}>
               {message.text}

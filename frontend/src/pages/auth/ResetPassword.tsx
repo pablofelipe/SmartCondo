@@ -20,7 +20,7 @@ const ResetPassword: React.FC = () => {
   useEffect(() => {
     if (!userId || !token) {
       navigate('/forgotPassword');
-      setError('Link inválido ou expirado');
+      setError('Invalid or expired link');
     }
   }, [userId, token, navigate]);
 
@@ -30,7 +30,7 @@ const ResetPassword: React.FC = () => {
     if (loading) return;
 
     if (password !== confirmPassword) {
-      setError('As senhas não coincidem');
+      setError('Passwords do not match');
       return;
     }
 
@@ -53,16 +53,14 @@ const ResetPassword: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao redefinir a senha.');
+        throw new Error(errorData.message || 'Failed to reset the password.');
       }
 
       const data = await response.json();
-      setMessage(data.message || 'Senha redefinida com sucesso!');
+      setMessage(data.message || 'Password reset successfully!');
       setError('');
-
-      //setTimeout(() => navigate('/login'), 3000);
     } catch (err: any) {
-      setError(err.message || 'Erro ao redefinir a senha.');
+      setError(err.message || 'Failed to reset the password.');
       setMessage('');
     } finally {
       setLoading(false);
@@ -74,7 +72,7 @@ const ResetPassword: React.FC = () => {
       <div className="container-main">
         <div className="wrap-main">
           <div className="reset-password-container">
-            <span className="main-form-title">Redefinir Senha</span>
+            <span className="main-form-title">Reset Password</span>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <div className="wrap-input100 validate-input">
@@ -88,7 +86,7 @@ const ResetPassword: React.FC = () => {
                   />
                   <span
                     className="focus-input100"
-                    data-placeholder="Nova Senha"
+                    data-placeholder="New Password"
                   ></span>
                 </div>
               </div>
@@ -105,7 +103,7 @@ const ResetPassword: React.FC = () => {
                   />
                   <span
                     className="focus-input100"
-                    data-placeholder="Confirmar Senha"
+                    data-placeholder="Confirm Password"
                   ></span>
                 </div>
               </div>
@@ -123,7 +121,7 @@ const ResetPassword: React.FC = () => {
                   className="btn100-form-btn"
                   disabled={loading}
                 >
-                  Redefinir Senha
+                  Reset Password
                 </button>
               </div>
 
@@ -133,7 +131,7 @@ const ResetPassword: React.FC = () => {
                   style={{ cursor: 'pointer' }}
                   onClick={() => navigate('/login')}
                 >
-                  Voltar ao Login
+                  Back to Login
                 </span>
               </div>
             </form>

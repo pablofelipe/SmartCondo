@@ -6,7 +6,7 @@ export const getAuthHeaders = (): Record<string, string> => {
   const correlationId = generateCorrelationId();
 
   if (!token) {
-    console.error('Token não encontrado. Faça login novamente.');
+    console.error('Token not found. Please log in again.');
     return {
       'Content-Type': 'application/json',
       'X-Correlation-Id': correlationId,

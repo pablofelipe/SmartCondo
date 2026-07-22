@@ -98,7 +98,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
     address: '',
   });
 
-  // Estados de loading
+  // Loading state
   const [loading, setLoading] = useState({
     submit: false,
     update: false,
@@ -119,7 +119,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
         const headers = getAuthHeaders();
 
         if (!headers.Authorization) {
-          console.error('Token de autenticação não encontrado');
+          console.error('Authentication token not found');
           return;
         }
 
@@ -131,7 +131,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
         console.log(`response: ${JSON.stringify(response)}`);
 
         if (!response.ok) {
-          throw new Error(`Erro ao carregar usuário: ${response.statusText}`);
+          throw new Error(`Failed to load user: ${response.statusText}`);
         }
 
         const data = await response.json();
@@ -162,9 +162,9 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
           passwordLength: data.passwordLength || 8,
         }));
       } catch (error) {
-        console.error('Erro ao carregar usuário:', error);
+        console.error('Error loading user:', error);
         setMessage({
-          text: 'Erro ao carregar dados do usuário',
+          text: 'Failed to load user data',
           type: 'error',
         });
       }
@@ -213,7 +213,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
           }));
         }
       } catch (error) {
-        console.error('Erro ao carregar condomínios:', error);
+        console.error('Error loading condominiums:', error);
       }
     };
 
@@ -237,7 +237,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
         const data = await response.json();
         setUserTypes(data);
       } catch (error) {
-        console.error('Erro ao carregar tipos de usuario:', error);
+        console.error('Error loading user types:', error);
       }
     };
 
@@ -268,12 +268,12 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
         const fullUrl = `${config.apiUrl}/Tower/byCondominium/${condominiumId}`;
         const response = await fetch(fullUrl, { method: 'GET', headers });
 
-        if (!response.ok) throw new Error('Erro na resposta da API');
+        if (!response.ok) throw new Error('API response error');
 
         const data = await response.json();
         setTowers(data);
       } catch (error) {
-        console.error('Erro ao carregar torres:', error);
+        console.error('Error loading towers:', error);
       }
     };
 
@@ -313,7 +313,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
     switch (name) {
       case 'email':
         if (!validateEmail(value)) {
-          newErrors.email = 'Email inválido';
+          newErrors.email = 'Invalid email';
         } else {
           newErrors.email = '';
         }
@@ -323,7 +323,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
         value = removeNonNumber(value);
         if (!validateCPF(value) && !validateCNPJ(value)) {
           newErrors.registration =
-            'CPF deve ter 11 caracteres, CNPJ deve ter 14 caracteres';
+            'The registration number must be 11 or 14 digits';
         } else {
           newErrors.registration = '';
         }
@@ -332,7 +332,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
       case 'phone1':
         value = removeNonNumber(value);
         if (!validatePhone(value)) {
-          newErrors.phone1 = 'Telefone deve ter pelo menos 9 números';
+          newErrors.phone1 = 'Phone number must have at least 9 digits';
         } else {
           newErrors.phone1 = '';
         }
@@ -341,7 +341,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
       case 'password':
         if (!validatePassword(value)) {
           newErrors.password =
-            'A senha deve ter pelo menos 6 caracteres, 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial.';
+            'Password must have at least 6 characters, 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character.';
         } else {
           newErrors.password = '';
         }
@@ -349,7 +349,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
 
       case 'confirmPassword':
         if (value != loginData.password) {
-          newErrors.confirmPassword = 'As senhas não coincidem.';
+          newErrors.confirmPassword = 'Passwords do not match.';
         } else {
           newErrors.confirmPassword = '';
         }
@@ -357,7 +357,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
 
       case 'name':
         if (!value || value.length < 3) {
-          newErrors.name = `Campo Nome obrigatório e deve ter pelo menos 3 caracteres`;
+          newErrors.name = `Name is required and must have at least 3 characters`;
         } else {
           newErrors.name = '';
         }
@@ -365,7 +365,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
 
       case 'address':
         if (!value || value.length < 3) {
-          newErrors.address = `Campo Endereço obrigatório e deve ter pelo menos 3 caracteres`;
+          newErrors.address = `Address is required and must have at least 3 characters`;
         } else {
           newErrors.address = '';
         }
@@ -379,7 +379,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
   };
 
   const handleDelete = async () => {
-    // Se já está carregando, não faz nada
+    // Already loading, do nothing
     if (loading.delete) return;
 
     setLoading((prev) => ({ ...prev, delete: true }));
@@ -391,11 +391,11 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
       });
 
       if (response.ok) {
-        setMessage({ text: 'Usuário deletado com sucesso', type: 'success' });
+        setMessage({ text: 'User deleted successfully', type: 'success' });
         navigate('/users');
       }
     } catch (error) {
-      setMessage({ text: 'Erro ao deletar usuário', type: 'error' });
+      setMessage({ text: 'Failed to delete user', type: 'error' });
     } finally {
       setLoading((prev) => ({ ...prev, delete: false }));
       setIsDeleteModalOpen(false);
@@ -473,7 +473,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
       errors.address
     ) {
       setMessage({
-        text: 'Corrija os erros antes de enviar o formulário!',
+        text: 'Fix the errors before submitting the form!',
         type: 'error',
       });
       return false;
@@ -530,7 +530,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
     if (errorData.errors) {
       errorMessage = Object.values(errorData.errors).flat().join('\n');
     } else {
-      errorMessage = errorData.message || 'Erro desconhecido';
+      errorMessage = errorData.message || 'Unknown error';
     }
 
     switch (response.status) {
@@ -540,27 +540,27 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
         throw new Error(errorMessage);
       case 500:
         throw new Error(
-          errorMessage || 'Erro no servidor. Tente novamente mais tarde.',
+          errorMessage || 'Server error. Please try again later.',
         );
       default:
-        throw new Error('Erro inesperado.');
+        throw new Error('Unexpected error.');
     }
   };
 
   const handleGenericError = (err: unknown): string => {
     if (err instanceof TypeError && err.message == 'Failed to fetch') {
-      return 'Não foi possível conectar ao servidor. Verifique sua conexão.';
+      return 'Could not connect to the server. Check your connection.';
     }
     if (err instanceof Error) {
       return err.message;
     }
-    return 'Erro inesperado.';
+    return 'Unexpected error.';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Se já está carregando, não faz nada
+    // Already loading, do nothing
     if (loading.submit) return;
 
     if (!validateForm()) return;
@@ -589,7 +589,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
       clearForm();
     } catch (err) {
       const error = handleGenericError(err);
-      console.error('Erro ao cadastrar usuário:', error);
+      console.error('Failed to register user:', error);
       setMessage({ text: error, type: 'error' });
     } finally {
       setLoading((prev) => ({ ...prev, submit: false }));
@@ -599,7 +599,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Se já está carregando, não faz nada
+    // Already loading, do nothing
     if (loading.update) return;
 
     if (!validateForm() || !userId) return;
@@ -628,7 +628,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
       setLoginData((prev) => ({ ...prev, showPasswordFields: false }));
     } catch (err) {
       const error = handleGenericError(err);
-      console.error('Erro ao atualizar usuário:', error);
+      console.error('Failed to update user:', error);
       setMessage({ text: error, type: 'error' });
     } finally {
       setLoading((prev) => ({ ...prev, update: false }));
@@ -664,12 +664,12 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
       <div className="container-main">
         <div className="wrap-main">
           <form onSubmit={mode == 'create' ? handleSubmit : handleUpdate}>
-            <span className="main-form-title">Cadastro de Usuários</span>
+            <span className="main-form-title">User Registration</span>
 
-            {/* Campos de Login */}
+            {/* Login fields */}
             <div
               className="wrap-input100 validate-input"
-              data-validate="Email válido: a@b.c"
+              data-validate="Valid e-mail: a@b.c"
             >
               <input
                 className={`input100 ${loginData.email ? 'has-val' : ''}`}
@@ -686,7 +686,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
               {errors.email && <p className="error-message">{errors.email}</p>}
             </div>
 
-            {/* Campo de Senha - Versão para edição/visualização */}
+            {/* Password field - edit/view version */}
             {mode != 'create' && !loginData.showPasswordFields ? (
               <div className="wrap-input100 validate-input">
                 <input
@@ -699,7 +699,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                 />
                 <span
                   className="focus-input100"
-                  data-placeholder="Senha"
+                  data-placeholder="Password"
                 ></span>
                 {!isViewMode && (
                   <button
@@ -708,16 +708,16 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                     onClick={handleChangePasswordClick}
                     disabled={loading.changePassword}
                   >
-                    {loading.changePassword ? 'Carregando...' : 'Alterar Senha'}
+                    {loading.changePassword ? 'Loading...' : 'Change Password'}
                   </button>
                 )}
               </div>
             ) : (
               <>
-                {/* Campo de Nova Senha */}
+                {/* New password field */}
                 <div
                   className="wrap-input100 validate-input"
-                  data-validate="Senha obrigatória"
+                  data-validate="Password is required"
                 >
                   <input
                     className={`input100 ${
@@ -734,17 +734,17 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                   />
                   <span
                     className="focus-input100"
-                    data-placeholder={mode == 'create' ? 'Senha' : 'Nova Senha'}
+                    data-placeholder={mode == 'create' ? 'Password' : 'New Password'}
                   ></span>
                   {errors.password && (
                     <p className="error-message">{errors.password}</p>
                   )}
                 </div>
 
-                {/* Campo de Confirmação */}
+                {/* Confirmation field */}
                 <div
                   className="wrap-input100 validate-input"
-                  data-validate="Confirme a senha"
+                  data-validate="Confirm the password"
                 >
                   <input
                     className={`input100 ${
@@ -763,8 +763,8 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                     className="focus-input100"
                     data-placeholder={
                       mode == 'create'
-                        ? 'Confirmar Senha'
-                        : 'Confirmar Nova Senha'
+                        ? 'Confirm Password'
+                        : 'Confirm New Password'
                     }
                   ></span>
                   {errors.confirmPassword && (
@@ -772,7 +772,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                   )}
                 </div>
 
-                {/* Botão para cancelar alteração de senha */}
+                {/* Cancel password change button */}
                 {mode != 'create' && loginData.showPasswordFields && (
                   <button
                     type="button"
@@ -780,16 +780,16 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                     onClick={handleCancelPasswordChange}
                     disabled={loading.changePassword}
                   >
-                    Cancelar Alteração
+                    Cancel Change
                   </button>
                 )}
               </>
             )}
 
-            {/* Campos do Usuário */}
+            {/* User fields */}
             <div
               className="wrap-input100 validate-input"
-              data-validate="Nome obrigatório"
+              data-validate="Name is required"
             >
               <input
                 className={`input100 ${userData.name ? 'has-val' : ''}`}
@@ -801,13 +801,13 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                 required
                 disabled={isViewMode}
               />
-              <span className="focus-input100" data-placeholder="Nome"></span>
+              <span className="focus-input100" data-placeholder="Name"></span>
               {errors.name && <p className="error-message">{errors.name}</p>}
             </div>
 
             <div
               className="wrap-input100 validate-input"
-              data-validate="Endereço obrigatório"
+              data-validate="Address is required"
             >
               <input
                 className={`input100 ${userData.address ? 'has-val' : ''}`}
@@ -821,7 +821,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
               />
               <span
                 className="focus-input100"
-                data-placeholder="Endereço"
+                data-placeholder="Address"
               ></span>
               {errors.address && (
                 <p className="error-message">{errors.address}</p>
@@ -830,7 +830,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
 
             <div
               className="wrap-input100 validate-input"
-              data-validate="CPF/CNPJ obrigatório"
+              data-validate="Registration number is required"
             >
               <input
                 className={`input100 ${
@@ -846,7 +846,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
               />
               <span
                 className="focus-input100"
-                data-placeholder="CPF ou CNPJ"
+                data-placeholder="Registration number"
               ></span>
               {errors.registration && (
                 <p className="error-message">{errors.registration}</p>
@@ -855,7 +855,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
 
             <div
               className="wrap-input100 validate-input"
-              data-validate="Telefone obrigatório"
+              data-validate="Phone number is required"
             >
               <input
                 className={`input100 ${userData.phone1 ? 'has-val' : ''}`}
@@ -869,7 +869,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
               />
               <span
                 className="focus-input100"
-                data-placeholder="Telefone"
+                data-placeholder="Phone"
               ></span>
               {errors.phone1 && (
                 <p className="error-message">{errors.phone1}</p>
@@ -878,10 +878,10 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
 
             <div
               className="wrap-input100 validate-input"
-              data-validate="Tipo de usuário obrigatório"
+              data-validate="User type is required"
             >
               <label htmlFor="user-type" className="input-label">
-                Tipo de Usuário
+                User Type
               </label>
               <select
                 className={`input100 ${userData.userTypeId ? 'has-val' : ''}`}
@@ -892,7 +892,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                 required
                 disabled={isViewMode}
               >
-                <option value="">Selecione</option>
+                <option value="">Select</option>
                 {filteredUserTypes.map((ut: any) => (
                   <option key={ut.id} value={ut.id}>
                     {ut.description}
@@ -901,15 +901,15 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
               </select>
               <span
                 className="focus-input100"
-                data-placeholder="Tipo de Usuário"
+                data-placeholder="User Type"
               ></span>
             </div>
 
-            {/* Campos de Condomínio, Torre, Andar e Apartamento */}
+            {/* Condominium, Tower, Floor and Apartment fields */}
             {canManageAllCondominiums() && !isSysAdmin && (
               <div className="wrap-input100 validate-input">
                 <label htmlFor="condominium" className="input-label">
-                  Condomínio
+                  Condominium
                 </label>
                 <select
                   className={`input100 ${
@@ -921,7 +921,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                   required
                   disabled={isViewMode}
                 >
-                  <option value="">Selecione</option>
+                  <option value="">Select</option>
                   {condominiums.map((condo: any) => (
                     <option key={condo.id} value={condo.id}>
                       {condo.name}
@@ -933,7 +933,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
 
             {!canManageAllCondominiums() && currentUserCondominium && (
               <div className="wrap-input100">
-                <label className="input-label">Condomínio</label>
+                <label className="input-label">Condominium</label>
                 <input
                   type="text"
                   className="input100"
@@ -952,10 +952,10 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
               <>
                 <div
                   className="wrap-input100 validate-input"
-                  data-validate="Torre obrigatória"
+                  data-validate="Tower is required"
                 >
                   <label htmlFor="tower" className="input-label">
-                    Torre
+                    Tower
                   </label>
                   <select
                     className={`input100 ${userData.towerId ? 'has-val' : ''}`}
@@ -970,7 +970,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                       isViewMode
                     }
                   >
-                    <option value="">Selecione</option>
+                    <option value="">Select</option>
                     {towers.map((tower: any) => (
                       <option key={tower.id} value={tower.id}>
                         {tower.number} - {tower.name}
@@ -979,13 +979,13 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                   </select>
                   <span
                     className="focus-input100"
-                    data-placeholder="Torre"
+                    data-placeholder="Tower"
                   ></span>
                 </div>
 
                 <div
                   className="wrap-input100 validate-input"
-                  data-validate="Andar obrigatório"
+                  data-validate="Floor is required"
                 >
                   <input
                     className={`input100 ${userData.floorId ? 'has-val' : ''}`}
@@ -998,13 +998,13 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                   />
                   <span
                     className="focus-input100 focus-number"
-                    data-placeholder="Andar"
+                    data-placeholder="Floor"
                   ></span>
                 </div>
 
                 <div
                   className="wrap-input100 validate-input"
-                  data-validate="Apartamento obrigatório"
+                  data-validate="Apartment is required"
                 >
                   <input
                     className={`input100 ${
@@ -1019,13 +1019,13 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                   />
                   <span
                     className="focus-input100 focus-number"
-                    data-placeholder="Apartamento"
+                    data-placeholder="Apartment"
                   ></span>
                 </div>
 
                 <div
                   className="wrap-input100 validate-input"
-                  data-validate="Numero da vaga obrigatório"
+                  data-validate="Parking space number is required"
                 >
                   <input
                     className={`input100 ${
@@ -1040,7 +1040,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                   />
                   <span
                     className="focus-input100 focus-number"
-                    data-placeholder="Vaga Garagem"
+                    data-placeholder="Parking Space"
                   ></span>
                 </div>
               </>
@@ -1056,10 +1056,10 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                     disabled={loading.submit || loading.update}
                   >
                     {loading.submit || loading.update
-                      ? 'Carregando...'
+                      ? 'Loading...'
                       : mode == 'create'
-                      ? 'Cadastrar'
-                      : 'Atualizar'}
+                      ? 'Register'
+                      : 'Update'}
                   </button>
                 </div>
               </div>
@@ -1081,7 +1081,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                     onClick={() => setIsDeleteModalOpen(true)}
                     disabled={loading.delete}
                   >
-                    {loading.delete ? 'Deletando...' : 'Deletar'}
+                    {loading.delete ? 'Deleting...' : 'Delete'}
                   </button>
                 </div>
               </div>
@@ -1093,7 +1093,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
                 style={{ cursor: 'pointer' }}
                 onClick={handleGoToDashboard}
               >
-                Voltar ao Dashboard
+                Back to Dashboard
               </span>
             </div>
           </form>

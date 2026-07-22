@@ -32,26 +32,26 @@ import { requestNotificationPermission } from './utils/notifications';
 
 const AppContent: React.FC = () => {
   const [userId, setUserId] = useState<number | null>(null);
-  const { user } = useAuth(); // Use o hook useAuth para acessar o usuário
+  const { user } = useAuth();
 
   useEffect(() => {
-    // Solicitar permissão de notificação ao carregar o app
+    // Request notification permission when the app loads
     requestNotificationPermission();
 
-    // Obter userId do contexto de autenticação
+    // Get userId from the auth context
     if (user?.id) {
       setUserId(user.id);
     } else {
       setUserId(null);
     }
-  }, [user]); // Executar sempre que o usuário mudar
+  }, [user]);
 
   return (
     <>
       <Router>
         <Routes>
-          <Route path="/login" element={<Login />} /> {/* Rota de login */}
-          {/* Redireciona para /login por padrão */}
+          <Route path="/login" element={<Login />} /> {/* Login route */}
+          {/* Redirects to /login by default */}
           <Route path="/" element={<Navigate to="/login" />} />{' '}
           <Route path="/forgotPassword" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
@@ -186,7 +186,7 @@ const AppContent: React.FC = () => {
         </Routes>
       </Router>
 
-      {/* Handler de notificações - renderiza apenas se userId existir */}
+      {/* Notification handler - only renders if userId exists */}
       {userId && <NotificationHandler userId={userId} />}
     </>
   );

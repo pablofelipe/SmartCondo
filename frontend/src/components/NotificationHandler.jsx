@@ -5,20 +5,20 @@ import { showNotification } from '../utils/notifications';
 const NotificationHandler = ({ userId }) => {
   const handleWebSocketMessage = async (data) => {
     if (data.type === 'NEW_MESSAGE') {
-      // Mostrar notificação nativa
+      // Show the native notification
       await showNotification({
-        title: 'Nova Mensagem',
+        title: 'New Message',
         body: data.message.content,
         icon: '/icon-192.png',
       });
 
-      // Ex: context/messagesContext.updateMessages(data.message);
+      // E.g.: context/messagesContext.updateMessages(data.message);
     }
   };
 
   useWebSocket(userId, handleWebSocketMessage);
 
-  return null; // Componente não renderiza nada visível
+  return null; // This component renders nothing visible
 };
 
 export default NotificationHandler;

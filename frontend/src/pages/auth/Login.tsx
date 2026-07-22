@@ -41,50 +41,49 @@ const Login: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json(); // Captura a mensagem de erro do backend
-        const errorMessage = errorData.message || 'Erro desconhecido';
+        const errorData = await response.json(); // Capture the error message from the backend
+        const errorMessage = errorData.message || 'Unknown error';
 
         switch (response.status) {
           case 400: // BadRequest (InvalidCredentialsException)
-            throw new Error(errorMessage || 'Credenciais inválidas.');
+            throw new Error(errorMessage || 'Invalid credentials.');
 
           case 401: // Unauthorized (UserDisabledException, UserExpiredException, IncorrectPasswordException)
-            throw new Error(errorMessage || 'Acesso não autorizado.');
+            throw new Error(errorMessage || 'Unauthorized access.');
 
           case 404: // NotFound (UserNotFoundException)
-            throw new Error(errorMessage || 'Usuário não encontrado.');
+            throw new Error(errorMessage || 'User not found.');
 
-          case 500: // InternalServerError (Exception genérica)
+          case 500: // InternalServerError (generic Exception)
             throw new Error(
               errorMessage ||
-                'Ocorreu um erro no servidor. Tente novamente mais tarde.',
+                'A server error occurred. Please try again later.',
             );
 
           default:
-            throw new Error('Erro inesperado.');
+            throw new Error('Unexpected error.');
         }
       }
 
       const data = await response.json();
 
-      console.log('Login bem-sucedido:', data);
+      console.log('Login successful:', data);
 
-      //localStorage.setItem('token', data.token);
       login(data.token, data.user);
 
       navigate('/dashboard');
     } catch (err) {
       if (err instanceof TypeError && err.message === 'Failed to fetch') {
         setError(
-          'Não foi possível conectar ao servidor. Verifique sua conexão com a internet.',
+          'Could not connect to the server. Check your internet connection.',
         );
       } else if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('Erro inesperado.');
+        setError('Unexpected error.');
       }
 
-      console.error('Erro ao fazer login:', err);
+      console.error('Login error:', err);
     } finally {
       setLoading(false);
     }
@@ -105,7 +104,7 @@ const Login: React.FC = () => {
           <form onSubmit={handleSubmit}>
             <div
               className="wrap-input100 validate-input"
-              data-validate="Email valido: a@b.c"
+              data-validate="Valid e-mail: a@b.c"
             >
               <input
                 className={`input100 ${user ? 'has-val' : ''}`}
@@ -165,7 +164,7 @@ const Login: React.FC = () => {
                 style={{ cursor: 'pointer' }}
                 onClick={handleForgotPassword}
               >
-                Esqueceu a senha?
+                Forgot your password?
               </span>
             </div>
           </form>

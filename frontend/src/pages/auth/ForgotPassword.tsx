@@ -33,15 +33,15 @@ const ForgotPassword: React.FC = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Erro ao enviar o e-mail.');
+        throw new Error(data.message || 'Failed to send the e-mail.');
       }
 
       setMessage(
-        data.message || 'Um link de redefinição foi enviado para seu e-mail.',
+        data.message || 'A reset link has been sent to your e-mail.',
       );
     } catch (err: any) {
       setError(
-        err.message || 'Erro ao processar sua solicitação. Tente novamente.',
+        err.message || 'Failed to process your request. Please try again.',
       );
     } finally {
       setIsLoading(false);
@@ -53,13 +53,13 @@ const ForgotPassword: React.FC = () => {
       <div className="container-main">
         <div className="wrap-main">
           <div className="forgot-password-container">
-            <span className="main-form-title">Esqueci minha senha</span>
+            <span className="main-form-title">Forgot my password</span>
 
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <div
                   className="wrap-input100 validate-input"
-                  data-validate="Email válido: exemplo@dominio.com"
+                  data-validate="Valid e-mail: example@domain.com"
                 >
                   <input
                     className={`input100 ${email ? 'has-val' : ''}`}
@@ -81,8 +81,8 @@ const ForgotPassword: React.FC = () => {
                 <div className="alert alert-success">
                   <p className="success-message">{message}</p>
                   <p>
-                    Verifique sua caixa de spam caso não encontre na caixa de
-                    entrada.
+                    Check your spam folder if you don't find it in your
+                    inbox.
                   </p>
                 </div>
               )}
@@ -99,7 +99,7 @@ const ForgotPassword: React.FC = () => {
                   className="btn100-form-btn"
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Enviando...' : 'Enviar Link'}
+                  {isLoading ? 'Sending...' : 'Send Link'}
                 </button>
               </div>
 
@@ -109,7 +109,7 @@ const ForgotPassword: React.FC = () => {
                   style={{ cursor: 'pointer' }}
                   onClick={() => navigate('/login')}
                 >
-                  Voltar ao Login
+                  Back to Login
                 </span>
               </div>
             </form>

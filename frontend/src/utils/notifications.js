@@ -1,7 +1,7 @@
 // utils/notifications.js
 export const requestNotificationPermission = async () => {
     if (!('Notification' in window)) {
-        console.log('Notificações não suportadas');
+        console.log('Notifications not supported');
         return false;
     }
 
@@ -18,7 +18,7 @@ export const showNotification = async ({ title, body, icon }) => {
         return;
     }
 
-    // Verificar se Service Worker está disponível para notificações push
+    // Check whether a Service Worker is available for push notifications
     if ('serviceWorker' in navigator && Notification.permission === 'granted') {
         const registration = await navigator.serviceWorker.ready;
 
@@ -30,7 +30,7 @@ export const showNotification = async ({ title, body, icon }) => {
             tag: 'new-message'
         });
     } else {
-        // Fallback para notificações básicas
+        // Fallback to basic notifications
         new Notification(title, { body, icon });
     }
 };

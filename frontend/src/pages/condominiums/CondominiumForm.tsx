@@ -64,7 +64,7 @@ const CondominiumForm = ({
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  // Estados de loading para cada botão
+  // Loading state per button
   const [loading, setLoading] = useState({
     submit: false,
     delete: false,
@@ -120,13 +120,13 @@ const CondominiumForm = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Se já está carregando, não faz nada
+    // Already loading, do nothing
     if (loading.submit) return;
 
-    // Validação básica
+    // Basic validation
     if (!condominiumData.name || condominiumData.maxUsers <= 0) {
       setMessage({
-        text: 'Preencha todos os campos obrigatórios',
+        text: 'Fill in all required fields',
         type: 'error',
       });
       return;
@@ -167,7 +167,7 @@ const CondominiumForm = ({
         navigate(`/condominiums/${data.id}/edit`);
       } else {
         setMessage({
-          text: 'Condomínio atualizado com sucesso',
+          text: 'Condominium updated successfully',
           type: 'success',
         });
       }
@@ -182,7 +182,7 @@ const CondominiumForm = ({
   };
 
   const handleDelete = async () => {
-    // Se já está carregando, não faz nada
+    // Already loading, do nothing
     if (loading.delete) return;
 
     setLoading((prev) => ({ ...prev, delete: true }));
@@ -214,11 +214,11 @@ const CondominiumForm = ({
   };
 
   const handleSaveTower = async () => {
-    // Se já está carregando, não faz nada
+    // Already loading, do nothing
     if (loading.saveTower) return;
 
     if (!currentTower.name || currentTower.floorCount <= 0) {
-      setMessage({ text: 'Preencha todos os campos da torre', type: 'error' });
+      setMessage({ text: 'Fill in all tower fields', type: 'error' });
       return;
     }
 
@@ -242,20 +242,20 @@ const CondominiumForm = ({
 
       setShowTowerForm(false);
       setMessage({
-        text: `Torre ${
-          editingTowerIndex !== null ? 'atualizada' : 'adicionada'
-        } com sucesso`,
+        text: `Tower ${
+          editingTowerIndex !== null ? 'updated' : 'added'
+        } successfully`,
         type: 'success',
       });
     } catch (error) {
-      setMessage({ text: 'Erro ao salvar torre', type: 'error' });
+      setMessage({ text: 'Error saving tower', type: 'error' });
     } finally {
       setLoading((prev) => ({ ...prev, [loadingKey]: false }));
     }
   };
 
   const handleRemoveTower = async (index: number) => {
-    // Se já está carregando, não faz nada
+    // Already loading, do nothing
     if (loading.removeTower) return;
 
     setLoading((prev) => ({ ...prev, removeTower: true }));
@@ -269,9 +269,9 @@ const CondominiumForm = ({
         towerCount: updatedTowers.length,
       });
 
-      setMessage({ text: 'Torre removida com sucesso', type: 'success' });
+      setMessage({ text: 'Tower removed successfully', type: 'success' });
     } catch (error) {
-      setMessage({ text: 'Erro ao remover torre', type: 'error' });
+      setMessage({ text: 'Error removing tower', type: 'error' });
     } finally {
       setLoading((prev) => ({ ...prev, removeTower: false }));
     }
@@ -284,10 +284,10 @@ const CondominiumForm = ({
   const renderTowerInfo = (tower: TowerData) => {
     return (
       <div className="tower-info">
-        <span className="tower-number">Torre {tower.number}</span>
+        <span className="tower-number">Tower {tower.number}</span>
         <span className="tower-name">{tower.name}</span>
         <span className="tower-floors">
-          {tower.floorCount} {tower.floorCount === 1 ? 'andar' : 'andares'}
+          {tower.floorCount} {tower.floorCount === 1 ? 'floor' : 'floors'}
         </span>
       </div>
     );
@@ -300,14 +300,14 @@ const CondominiumForm = ({
           <form onSubmit={handleSubmit}>
             <span className="main-form-title">
               {mode === 'create'
-                ? 'Cadastro'
+                ? 'Registration'
                 : mode === 'edit'
-                ? 'Edição'
-                : 'Visualização'}{' '}
-              de Condomínio
+                ? 'Edit'
+                : 'View'}{' '}
+              Condominium
             </span>
 
-            {/* Campos do Condomínio */}
+            {/* Condominium fields */}
             <div className="wrap-input100 validate-input">
               <input
                 className={`input100 ${condominiumData.name ? 'has-val' : ''}`}
@@ -318,7 +318,7 @@ const CondominiumForm = ({
                 required
                 disabled={isViewMode}
               />
-              <span className="focus-input100" data-placeholder="Nome"></span>
+              <span className="focus-input100" data-placeholder="Name"></span>
             </div>
 
             <div className="wrap-input100 validate-input">
@@ -335,7 +335,7 @@ const CondominiumForm = ({
               />
               <span
                 className="focus-input100"
-                data-placeholder="Endereço"
+                data-placeholder="Address"
               ></span>
             </div>
 
@@ -354,14 +354,14 @@ const CondominiumForm = ({
               />
               <span
                 className="focus-input100"
-                data-placeholder="Máximo de Usuários"
+                data-placeholder="Maximum Users"
               ></span>
             </div>
 
-            {/* Seção de Torres - Lista */}
+            {/* Towers section - list */}
             <div className="tower-section">
               <div className="tower-header">
-                <h3>Torres</h3>
+                <h3>Towers</h3>
                 {!isViewMode && !showTowerForm && (
                   <button
                     type="button"
@@ -369,12 +369,12 @@ const CondominiumForm = ({
                     onClick={handleAddTowerClick}
                     disabled={loading.addTower}
                   >
-                    {loading.addTower ? 'Carregando...' : '+ Adicionar Torre'}
+                    {loading.addTower ? 'Loading...' : '+ Add Tower'}
                   </button>
                 )}
               </div>
 
-              {/* Lista de torres */}
+              {/* Tower list */}
               {condominiumData.towers.length > 0 ? (
                 <div className="tower-list">
                   {condominiumData.towers.map((tower, index) => (
@@ -388,7 +388,7 @@ const CondominiumForm = ({
                             onClick={() => handleEditTower(index)}
                             disabled={loading.editTower}
                           >
-                            {loading.editTower ? 'Carregando...' : 'Editar'}
+                            {loading.editTower ? 'Loading...' : 'Edit'}
                           </button>
                           <button
                             type="button"
@@ -396,7 +396,7 @@ const CondominiumForm = ({
                             onClick={() => handleRemoveTower(index)}
                             disabled={loading.removeTower}
                           >
-                            {loading.removeTower ? 'Removendo...' : 'Remover'}
+                            {loading.removeTower ? 'Removing...' : 'Remove'}
                           </button>
                         </div>
                       )}
@@ -405,21 +405,21 @@ const CondominiumForm = ({
                 </div>
               ) : (
                 !showTowerForm && (
-                  <p className="no-towers">Nenhuma torre cadastrada</p>
+                  <p className="no-towers">No towers registered</p>
                 )
               )}
 
-              {/* Formulário de Torre */}
+              {/* Tower form */}
               {showTowerForm && (
                 <div className="tower-form">
                   <h4 className="tower-form-title">
                     {editingTowerIndex !== null
-                      ? 'Editar Torre'
-                      : 'Adicionar Nova Torre'}
+                      ? 'Edit Tower'
+                      : 'Add New Tower'}
                   </h4>
 
                   <div className="form-group">
-                    <label htmlFor="tower-number">Número da Torre</label>
+                    <label htmlFor="tower-number">Tower Number</label>
                     <input
                       id="tower-number"
                       className="form-control"
@@ -437,7 +437,7 @@ const CondominiumForm = ({
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="tower-name">Nome da Torre</label>
+                    <label htmlFor="tower-name">Tower Name</label>
                     <input
                       id="tower-name"
                       className="form-control"
@@ -454,7 +454,7 @@ const CondominiumForm = ({
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="tower-floors">Quantidade de Andares</label>
+                    <label htmlFor="tower-floors">Number of Floors</label>
                     <input
                       id="tower-floors"
                       className="form-control"
@@ -485,11 +485,11 @@ const CondominiumForm = ({
                       {loading.saveTower ||
                       loading.addTower ||
                       loading.editTower
-                        ? 'Salvando...'
+                        ? 'Saving...'
                         : editingTowerIndex !== null
-                        ? 'Atualizar'
-                        : 'Salvar'}{' '}
-                      Torre
+                        ? 'Update'
+                        : 'Save'}{' '}
+                      Tower
                     </button>
                     <button
                       type="button"
@@ -501,14 +501,14 @@ const CondominiumForm = ({
                         loading.editTower
                       }
                     >
-                      Cancelar
+                      Cancel
                     </button>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Botões de ação */}
+            {/* Action buttons */}
             {(canRegisterCondominiums && mode === 'create') ||
             (canEditCondominiums && mode === 'edit') ? (
               <div className="container-btn100-form-btn">
@@ -520,10 +520,10 @@ const CondominiumForm = ({
                     disabled={loading.submit}
                   >
                     {loading.submit
-                      ? 'Carregando...'
+                      ? 'Loading...'
                       : mode === 'create'
-                      ? 'Cadastrar'
-                      : 'Atualizar'}
+                      ? 'Register'
+                      : 'Update'}
                   </button>
                 </div>
               </div>
@@ -545,7 +545,7 @@ const CondominiumForm = ({
                     onClick={() => setIsDeleteModalOpen(true)}
                     disabled={loading.delete}
                   >
-                    {loading.delete ? 'Deletando...' : 'Deletar'}
+                    {loading.delete ? 'Deleting...' : 'Delete'}
                   </button>
                 </div>
               </div>
@@ -557,7 +557,7 @@ const CondominiumForm = ({
                 style={{ cursor: 'pointer' }}
                 onClick={() => navigate('/condominiums')}
               >
-                Voltar para Lista
+                Back to List
               </span>
             </div>
           </form>

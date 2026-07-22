@@ -16,8 +16,8 @@ export const DeleteConfirmationModal: React.FC<
   isOpen,
   onClose,
   onConfirm,
-  title = 'Confirmar Exclusão',
-  message = 'Tem certeza que deseja excluir?',
+  title = 'Confirm Deletion',
+  message = 'Are you sure you want to delete this?',
   isLoading = false,
 }) => {
   if (!isOpen) return null;
@@ -33,14 +33,14 @@ export const DeleteConfirmationModal: React.FC<
         </div>
         <div className="modal-footer">
           <button className="btn-cancel" onClick={onClose} disabled={isLoading}>
-            Cancelar
+            Cancel
           </button>
           <button
             className="btn-confirm"
             onClick={onConfirm}
             disabled={isLoading}
           >
-            {isLoading ? 'Excluindo...' : 'Confirmar'}
+            {isLoading ? 'Deleting...' : 'Confirm'}
           </button>
         </div>
       </div>

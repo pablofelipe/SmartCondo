@@ -52,14 +52,12 @@ const Dashboard = () => {
         const data = await response.json();
         setStats(data);
       } catch (error) {
-        console.error('Erro ao carregar status do dashboard:', error);
+        console.error('Error loading dashboard stats:', error);
       }
     };
 
     fetchStats();
   }, []);
-
-  //console.log(`statsData: ${JSON.stringify(stats)}`);
 
   const getLoggedInUser = () => {
     const userString = localStorage.getItem('user');
@@ -71,43 +69,43 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      {/* Botão de menu para mobile */}
+      {/* Mobile menu button */}
       <button className="menu-toggle" onClick={toggleSidebar}>
         ☰
       </button>
 
-      {/* Sidebar de navegação */}
+      {/* Navigation sidebar */}
       <aside className={`sidebar ${sidebarVisible ? 'visible' : ''}`}>
         <i className="icon-smartCondo small white"></i>
         <nav>
           <ul>
             {user && (
               <li>
-                <Link to={`/users/${user.id}/view`}>Meu Perfil</Link>
+                <Link to={`/users/${user.id}/view`}>My Profile</Link>
               </li>
             )}
 
             {canViewCondominiums && (
               <li>
-                <Link to="/condominiums">Condomínios</Link>
+                <Link to="/condominiums">Condominiums</Link>
               </li>
             )}
 
             {canViewUsers && (
               <li>
-                <Link to="/users">Usuários</Link>
+                <Link to="/users">Users</Link>
               </li>
             )}
 
             {canViewVehicles && (
               <li>
-                <Link to="/vehicles">Veículos</Link>
+                <Link to="/vehicles">Vehicles</Link>
               </li>
             )}
 
             {canViewMessages && (
               <li>
-                <Link to="/messages">Mensagens</Link>
+                <Link to="/messages">Messages</Link>
               </li>
             )}
           </ul>
@@ -117,30 +115,30 @@ const Dashboard = () => {
         </nav>
       </aside>
 
-      {/* Área principal */}
+      {/* Main area */}
       <main className="dashboard-content">
         <header className="dashboard-header">
-          <h1>Painel de Controle</h1>
+          <h1>Control Panel</h1>
         </header>
 
         <section className="dashboard-stats">
           <div className="card">
             🔑
-            {`${stats.totalUsers === 0 ? 'Nenhum' : stats.totalUsers} 
+            {`${stats.totalUsers === 0 ? 'No' : stats.totalUsers}
             ${
               stats.totalUsers <= 1
-                ? 'usuário cadastrado'
-                : 'usuários cadastrados'
+                ? 'registered user'
+                : 'registered users'
             }`.trim()}
           </div>
 
           <div className="card">
             🚗
-            {`${stats.totalVehicles === 0 ? 'Nenhum' : stats.totalVehicles} 
+            {`${stats.totalVehicles === 0 ? 'No' : stats.totalVehicles}
             ${
               stats.totalVehicles <= 1
-                ? 'veículo cadastrado'
-                : 'veículos cadastrados'
+                ? 'registered vehicle'
+                : 'registered vehicles'
             }`.trim()}
           </div>
 
@@ -148,13 +146,13 @@ const Dashboard = () => {
             📩
             {`${
               stats.recentNotifications === 0
-                ? 'Nenhuma'
+                ? 'No'
                 : stats.recentNotifications
-            } 
+            }
             ${
               stats.recentNotifications <= 1
-                ? 'mensagem enviada'
-                : 'mensagens enviadas'
+                ? 'message sent'
+                : 'messages sent'
             }`.trim()}
           </div>
         </section>

@@ -31,10 +31,10 @@ export const fetchApi = async <T>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'Erro na requisição');
+    throw new Error(error.message || 'Request failed');
   }
 
-  // Se for void (como no markAsRead), não tenta parsear JSON
+  // For void responses (like markAsRead), don't try to parse JSON
   if (response.status === 204 || options.expectNoContent) {
     return undefined as unknown as T;
   }
@@ -42,10 +42,9 @@ export const fetchApi = async <T>(
   return response.json() as Promise<T>;
 };
 
-// E então você pode usar:
 export const markAsRead = async (messageId: number): Promise<void> => {
   return fetchApi<void>(`/Messages/${messageId}/read`, {
     method: 'PATCH',
-    expectNoContent: true, // Nova flag opcional
+    expectNoContent: true,
   });
 };

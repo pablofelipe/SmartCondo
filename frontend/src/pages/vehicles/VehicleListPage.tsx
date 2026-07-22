@@ -44,7 +44,6 @@ const VehicleListPage: React.FC = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setHasSearched(false);
-    //setSearchTerms((prev) => ({ ...prev, [name]: value }));
     if (name == 'apartmentNumber' || name == 'parkingSpaceNumber') {
       setSearchTerms((prev) => ({
         ...prev,
@@ -70,7 +69,7 @@ const VehicleListPage: React.FC = () => {
     );
 
     if (!hasAtLeastOneFilter) {
-      setErrorMessage('Por favor, preencha pelo menos um campo de busca');
+      setErrorMessage('Please fill in at least one search field');
       return;
     }
 
@@ -82,9 +81,9 @@ const VehicleListPage: React.FC = () => {
       }
     } catch (err: any) {
       if (err.message.includes('Nenhum parâmetro para veículo recebido')) {
-        setErrorMessage('Por favor, preencha pelo menos um campo de busca');
+        setErrorMessage('Please fill in at least one search field');
       } else {
-        setErrorMessage(`Erro na busca: ${err.message}`);
+        setErrorMessage(`Search error: ${err.message}`);
       }
     }
   };
@@ -105,7 +104,7 @@ const VehicleListPage: React.FC = () => {
       <div className="container-main">
         <div className="wrap-main">
           <div className="form-header">
-            <h1 className="main-form-title">Busca de Veículos</h1>
+            <h1 className="main-form-title">Vehicle Search</h1>
 
             <form onSubmit={handleSearch} className="search-form">
               <div className="search-fields">
@@ -121,7 +120,7 @@ const VehicleListPage: React.FC = () => {
                   />
                   <span
                     className="focus-input100"
-                    data-placeholder="Placa"
+                    data-placeholder="License Plate"
                   ></span>
                 </div>
 
@@ -135,7 +134,7 @@ const VehicleListPage: React.FC = () => {
                   />
                   <span
                     className="focus-input100"
-                    data-placeholder="Modelo"
+                    data-placeholder="Model"
                   ></span>
                 </div>
 
@@ -151,7 +150,7 @@ const VehicleListPage: React.FC = () => {
                   />
                   <span
                     className="focus-input100"
-                    data-placeholder="Apartamento"
+                    data-placeholder="Apartment"
                   ></span>
                 </div>
 
@@ -167,7 +166,7 @@ const VehicleListPage: React.FC = () => {
                   />
                   <span
                     className="focus-input100"
-                    data-placeholder="Vaga"
+                    data-placeholder="Parking Space"
                   ></span>
                 </div>
 
@@ -183,7 +182,7 @@ const VehicleListPage: React.FC = () => {
                   />
                   <span
                     className="focus-input100"
-                    data-placeholder="Nome do Condômino"
+                    data-placeholder="Owner Name"
                   ></span>
                 </div>
 
@@ -199,7 +198,7 @@ const VehicleListPage: React.FC = () => {
                   />
                   <span
                     className="focus-input100"
-                    data-placeholder="CPF/CNPJ"
+                    data-placeholder="Registration number"
                   ></span>
                 </div>
 
@@ -211,7 +210,7 @@ const VehicleListPage: React.FC = () => {
                       className="btn100-form-btn"
                       disabled={loading}
                     >
-                      {loading ? 'Buscando...' : 'Buscar'}
+                      {loading ? 'Searching...' : 'Search'}
                     </button>
                   </div>
                 </div>
@@ -226,7 +225,7 @@ const VehicleListPage: React.FC = () => {
                       onClick={handleReset}
                       disabled={loading}
                     >
-                      Limpar
+                      Clear
                     </button>
                   </div>
                 </div>
@@ -244,13 +243,13 @@ const VehicleListPage: React.FC = () => {
                   <table className="user-table">
                     <thead>
                       <tr>
-                        <th>Placa</th>
-                        <th>Tipo</th>
-                        <th>Modelo</th>
-                        <th>Condômino</th>
-                        <th>Apartamento</th>
-                        <th>Visualizar</th>
-                        <th>Editar</th>
+                        <th>License Plate</th>
+                        <th>Type</th>
+                        <th>Model</th>
+                        <th>Owner</th>
+                        <th>Apartment</th>
+                        <th>View</th>
+                        <th>Edit</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -259,18 +258,18 @@ const VehicleListPage: React.FC = () => {
                           <td>{vehicle.licensePlate}</td>
                           <td>
                             {vehicle.type === 'Car'
-                              ? 'Carro'
+                              ? 'Car'
                               : vehicle.type === 'Motorcycle'
-                              ? 'Moto'
+                              ? 'Motorcycle'
                               : vehicle.type === 'Truck'
-                              ? 'Caminhão'
+                              ? 'Truck'
                               : vehicle.type}
                           </td>
                           <td>{vehicle.model}</td>
                           <td>{vehicle.user.name}</td>
                           <td>{vehicle.user.apartment}</td>
                           {/*
-                          <td>{vehicle.enabled ? 'Ativo' : 'Inativo'}</td>
+                          <td>{vehicle.enabled ? 'Active' : 'Inactive'}</td>
                           */}
 
                           <td>
@@ -279,7 +278,7 @@ const VehicleListPage: React.FC = () => {
                                 to={`/vehicles/${vehicle.id}/view`}
                                 className="view-link"
                               >
-                                Visualizar
+                                View
                               </Link>
                             )}
                           </td>
@@ -289,7 +288,7 @@ const VehicleListPage: React.FC = () => {
                                 to={`/vehicles/${vehicle.id}/edit`}
                                 className="edit-link"
                               >
-                                Editar
+                                Edit
                               </Link>
                             )}
                           </td>
@@ -299,7 +298,7 @@ const VehicleListPage: React.FC = () => {
                   </table>
                 ) : (
                   <div className="no-results">
-                    <p>Nenhum veículo encontrado</p>
+                    <p>No vehicles found</p>
                   </div>
                 )}
               </div>
@@ -311,7 +310,7 @@ const VehicleListPage: React.FC = () => {
                 style={{ cursor: 'pointer' }}
                 onClick={handleGoToDashboard}
               >
-                Voltar ao Dashboard
+                Back to Dashboard
               </span>
             </div>
           </div>

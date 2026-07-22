@@ -28,6 +28,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Se passou em todas as validações, renderiza a rota
+  // Passed every check, render the route
   return <>{children}</>;
 };

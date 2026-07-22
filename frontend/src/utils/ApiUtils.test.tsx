@@ -1,7 +1,7 @@
 import { generateCorrelationId, getAuthHeaders } from './ApiUtils';
 
 describe('generateCorrelationId', () => {
-  it('gera valores diferentes a cada chamada', () => {
+  it('generates different values on each call', () => {
     const first = generateCorrelationId();
     const second = generateCorrelationId();
 
@@ -14,13 +14,13 @@ describe('getAuthHeaders', () => {
     localStorage.clear();
   });
 
-  it('inclui X-Correlation-Id mesmo sem token', () => {
+  it('includes X-Correlation-Id even without a token', () => {
     const headers = getAuthHeaders();
 
     expect(headers['X-Correlation-Id']).toBeTruthy();
   });
 
-  it('inclui X-Correlation-Id junto com o Authorization quando há token', () => {
+  it('includes X-Correlation-Id alongside Authorization when a token exists', () => {
     localStorage.setItem('token', 'fake-token');
 
     const headers = getAuthHeaders();
@@ -29,7 +29,7 @@ describe('getAuthHeaders', () => {
     expect(headers['X-Correlation-Id']).toBeTruthy();
   });
 
-  it('gera um X-Correlation-Id novo a cada chamada', () => {
+  it('generates a new X-Correlation-Id on each call', () => {
     const first = getAuthHeaders()['X-Correlation-Id'];
     const second = getAuthHeaders()['X-Correlation-Id'];
 

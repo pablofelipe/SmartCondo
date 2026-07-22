@@ -20,12 +20,12 @@ const CondominiumListPage = () => {
     e.preventDefault();
 
     if (!searchTerm.name) {
-      setError('Preencha o nome para busca');
+      setError('Enter a name to search');
       return;
     }
 
     if (searchTerm.name.length < 3) {
-      setError('O nome deve ter pelo menos 3 caracteres');
+      setError('The name must have at least 3 characters');
       return;
     }
 
@@ -52,8 +52,8 @@ const CondominiumListPage = () => {
         setSearchResults(data);
       }
     } catch (error) {
-      console.error('Erro na busca:', error);
-      setError('Ocorreu um erro na busca');
+      console.error('Search error:', error);
+      setError('An error occurred while searching');
     } finally {
       setIsSearching(false);
     }
@@ -68,7 +68,7 @@ const CondominiumListPage = () => {
       <div className="container-main">
         <div className="wrap-main">
           <div className="form-header">
-            <h1 className="main-form-title">Busca de Condomínios</h1>
+            <h1 className="main-form-title">Condominium Search</h1>
 
             <form onSubmit={handleSearch} className="search-form">
               <div className="search-fields">
@@ -83,7 +83,7 @@ const CondominiumListPage = () => {
                   />
                   <span
                     className="focus-input100"
-                    data-placeholder="Nome"
+                    data-placeholder="Name"
                   ></span>
                 </div>
 
@@ -96,7 +96,7 @@ const CondominiumListPage = () => {
                       onClick={handleSearch}
                       disabled={isSearching}
                     >
-                      {isSearching ? 'Buscando...' : 'Buscar'}
+                      {isSearching ? 'Searching...' : 'Search'}
                     </button>
                   </div>
                 </div>
@@ -110,7 +110,7 @@ const CondominiumListPage = () => {
                     className="btn100-form-btn"
                     onClick={handleCreateNewCondominium}
                   >
-                    Novo Condomínio
+                    New Condominium
                   </button>
                 </div>
               </div>
@@ -124,11 +124,11 @@ const CondominiumListPage = () => {
                   <table className="condominium-table">
                     <thead>
                       <tr>
-                        <th>Nome</th>
-                        <th>Endereço</th>
-                        <th>Torres</th>
-                        <th>Visualizar</th>
-                        <th>Editar</th>
+                        <th>Name</th>
+                        <th>Address</th>
+                        <th>Towers</th>
+                        <th>View</th>
+                        <th>Edit</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -143,7 +143,7 @@ const CondominiumListPage = () => {
                                 to={`/condominiums/${condominium.id}/view`}
                                 className="view-link"
                               >
-                                Visualizar
+                                View
                               </Link>
                             )}
                           </td>
@@ -153,7 +153,7 @@ const CondominiumListPage = () => {
                                 to={`/condominiums/${condominium.id}/edit`}
                                 className="edit-link"
                               >
-                                Editar
+                                Edit
                               </Link>
                             )}
                           </td>
@@ -165,9 +165,9 @@ const CondominiumListPage = () => {
               ) : (
                 <div className="no-results">
                   {isSearching ? (
-                    <p>Carregando resultados...</p>
+                    <p>Loading results...</p>
                   ) : (
-                    <p>Nenhum resultado encontrado. Faça uma busca.</p>
+                    <p>No results found. Try a search.</p>
                   )}
                 </div>
               )
@@ -179,7 +179,7 @@ const CondominiumListPage = () => {
                 onClick={() => navigate('/dashboard')}
                 style={{ cursor: 'pointer' }}
               >
-                Voltar ao Dashboard
+                Back to Dashboard
               </span>
             </div>
           </div>

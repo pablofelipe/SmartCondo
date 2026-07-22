@@ -49,7 +49,7 @@ const UserListPage = () => {
         setCondominiums(data);
       }
     } catch (error) {
-      console.error('Erro ao buscar condomínios:', error);
+      console.error('Error fetching condominiums:', error);
     }
   };
 
@@ -57,12 +57,12 @@ const UserListPage = () => {
     e.preventDefault();
 
     if (!searchTerm.name && !searchTerm.registrationNumber) {
-      setError('Preencha pelo menos um campo de busca');
+      setError('Fill in at least one search field');
       return;
     }
 
     if (searchTerm.name && searchTerm.name.length < 3) {
-      setError('O nome deve ter pelo menos 3 caracteres');
+      setError('The name must have at least 3 characters');
       return;
     }
 
@@ -70,7 +70,7 @@ const UserListPage = () => {
       searchTerm.registrationNumber &&
       searchTerm.registrationNumber.length < 11
     ) {
-      setError('O CPF/CNPJ deve ter pelo menos 11 caracteres');
+      setError('The registration number must have at least 11 characters');
       return;
     }
 
@@ -110,8 +110,8 @@ const UserListPage = () => {
         setSearchResults(data);
       }
     } catch (error) {
-      console.error('Erro na busca:', error);
-      setError('Ocorreu um erro na busca');
+      console.error('Search error:', error);
+      setError('An error occurred while searching');
     } finally {
       setIsSearching(false);
     }
@@ -126,7 +126,7 @@ const UserListPage = () => {
       <div className="container-main">
         <div className="wrap-main">
           <div className="form-header">
-            <h1 className="main-form-title">Busca de Usuários</h1>
+            <h1 className="main-form-title">User Search</h1>
 
             <form onSubmit={handleSearch} className="search-form">
               {isAdmin && (
@@ -139,7 +139,7 @@ const UserListPage = () => {
                     }
                     required
                   >
-                    <option value="">Selecione um condomínio</option>
+                    <option value="">Select a condominium</option>
                     {condominiums.map((condo) => (
                       <option key={condo.id} value={condo.id}>
                         {condo.name}
@@ -148,7 +148,7 @@ const UserListPage = () => {
                   </select>
                   <span
                     className="focus-input100"
-                    data-placeholder="Condomínio"
+                    data-placeholder="Condominium"
                   ></span>
                 </div>
               )}
@@ -165,7 +165,7 @@ const UserListPage = () => {
                   />
                   <span
                     className="focus-input100"
-                    data-placeholder="Nome"
+                    data-placeholder="Name"
                   ></span>
                 </div>
 
@@ -185,7 +185,7 @@ const UserListPage = () => {
                   />
                   <span
                     className="focus-input100"
-                    data-placeholder="CPF/CNPJ"
+                    data-placeholder="Registration number"
                   ></span>
                 </div>
 
@@ -200,7 +200,7 @@ const UserListPage = () => {
                         isSearching || (isAdmin && !selectedCondominium)
                       }
                     >
-                      {isSearching ? 'Buscando...' : 'Buscar'}
+                      {isSearching ? 'Searching...' : 'Search'}
                     </button>
                   </div>
                 </div>
@@ -214,7 +214,7 @@ const UserListPage = () => {
                     className="btn100-form-btn"
                     onClick={handleCreateNewUser}
                   >
-                    Novo Usuário
+                    New User
                   </button>
                 </div>
               </div>
@@ -228,11 +228,11 @@ const UserListPage = () => {
                   <table className="user-table">
                     <thead>
                       <tr>
-                        <th>Nome</th>
-                        <th>CPF/CNPJ</th>
-                        <th>Visualizar</th>
-                        <th>Editar</th>
-                        <th>Veiculos</th>
+                        <th>Name</th>
+                        <th>Registration number</th>
+                        <th>View</th>
+                        <th>Edit</th>
+                        <th>Vehicles</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -246,7 +246,7 @@ const UserListPage = () => {
                                 to={`/users/${user.id}/view`}
                                 className="view-link"
                               >
-                                Visualizar
+                                View
                               </Link>
                             )}
                           </td>
@@ -256,7 +256,7 @@ const UserListPage = () => {
                                 to={`/users/${user.id}/edit`}
                                 className="edit-link"
                               >
-                                Editar
+                                Edit
                               </Link>
                             )}
                           </td>
@@ -265,7 +265,7 @@ const UserListPage = () => {
                               to={`/vehicles/new/${user.id}`}
                               className="add-vehicle-link"
                             >
-                              Adicionar
+                              Add
                             </Link>
                           </td>
                         </tr>
@@ -276,9 +276,9 @@ const UserListPage = () => {
               ) : (
                 <div className="no-results">
                   {isSearching ? (
-                    <p>Carregando resultados...</p>
+                    <p>Loading results...</p>
                   ) : (
-                    <p>Nenhum resultado encontrado. Faça uma busca.</p>
+                    <p>No results found. Try a search.</p>
                   )}
                 </div>
               )
@@ -290,7 +290,7 @@ const UserListPage = () => {
                 onClick={() => navigate('/dashboard')}
                 style={{ cursor: 'pointer' }}
               >
-                Voltar ao Dashboard
+                Back to Dashboard
               </span>
             </div>
           </div>

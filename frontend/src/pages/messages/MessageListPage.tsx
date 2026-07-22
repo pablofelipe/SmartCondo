@@ -24,7 +24,7 @@ const MessageListPage: React.FC = () => {
             : await getSentMessages();
         setMessages(data);
       } catch (error) {
-        console.error('Erro ao carregar mensagens:', error);
+        console.error('Error loading messages:', error);
       } finally {
         setLoading(false);
       }
@@ -44,7 +44,7 @@ const MessageListPage: React.FC = () => {
         ),
       );
     } catch (error) {
-      console.error('Erro ao marcar como lida:', error);
+      console.error('Error marking as read:', error);
     }
   };
 
@@ -55,9 +55,9 @@ const MessageListPage: React.FC = () => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return (
-      date.toLocaleDateString('pt-BR') +
+      date.toLocaleDateString('en-US') +
       ' ' +
-      date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     );
   };
 
@@ -66,27 +66,27 @@ const MessageListPage: React.FC = () => {
       return message.recipientName;
     }
     if (message.scope === 'condominium' && message.condominiumName) {
-      return `Condomínio: ${message.condominiumName}`;
+      return `Condominium: ${message.condominiumName}`;
     }
     if (message.scope === 'tower' && message.towerName) {
-      return `Torre: ${message.towerName}`;
+      return `Tower: ${message.towerName}`;
     }
     if (message.scope === 'floor' && message.floorId) {
-      return `Andar: ${message.floorId}`;
+      return `Floor: ${message.floorId}`;
     }
-    return 'Vários destinatários';
+    return 'Multiple recipients';
   };
 
-  if (loading) return <div className="loading">Carregando...</div>;
+  if (loading) return <div className="loading">Loading...</div>;
 
   return (
     <div className="limiter">
       <div className="container-main">
         <div className="wrap-main">
           <div className="form-header">
-            <h1 className="main-form-title">Mensagens</h1>
+            <h1 className="main-form-title">Messages</h1>
 
-            {/* Abas para mensagens recebidas/enviadas */}
+            {/* Tabs for received/sent messages */}
             <div className="message-tabs">
               <button
                 className={`tab-button ${
@@ -94,13 +94,13 @@ const MessageListPage: React.FC = () => {
                 }`}
                 onClick={() => setActiveTab('received')}
               >
-                Recebidas
+                Received
               </button>
               <button
                 className={`tab-button ${activeTab === 'sent' ? 'active' : ''}`}
                 onClick={() => setActiveTab('sent')}
               >
-                Enviadas
+                Sent
               </button>
             </div>
 
@@ -121,11 +121,11 @@ const MessageListPage: React.FC = () => {
                       </span>
                       {activeTab === 'received' ? (
                         <span className="message-sender">
-                          De: {message.senderName}
+                          From: {message.senderName}
                         </span>
                       ) : (
                         <span className="message-recipient">
-                          Para: {getRecipientInfo(message)}
+                          To: {getRecipientInfo(message)}
                         </span>
                       )}
                       {activeTab === 'received' && !message.isRead && (
@@ -133,7 +133,7 @@ const MessageListPage: React.FC = () => {
                           className="mark-as-read-btn"
                           onClick={() => handleMarkAsRead(message.id)}
                         >
-                          Marcar como lida
+                          Mark as read
                         </button>
                       )}
                     </div>
@@ -144,26 +144,26 @@ const MessageListPage: React.FC = () => {
                     </div>
                     <div className="message-scope">
                       {message.scope === 'individual'
-                        ? ' Tipo: Individual'
+                        ? ' Type: Individual'
                         : message.scope === 'condominium'
-                        ? 'Tipo: Condomínio'
+                        ? 'Type: Condominium'
                         : message.scope === 'tower'
-                        ? 'Tipo: Torre'
+                        ? 'Type: Tower'
                         : message.scope === 'floor'
-                        ? 'Tipo: Andar'
+                        ? 'Type: Floor'
                         : ''}
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="no-messages">
-                  Nenhuma mensagem{' '}
-                  {activeTab === 'received' ? 'recebida' : 'enviada'}
+                  No messages{' '}
+                  {activeTab === 'received' ? 'received' : 'sent'}
                 </div>
               )}
             </div>
 
-            {/* Botões de ação */}
+            {/* Action buttons */}
 
             <div className="container-btn100-form-btn">
               <div className="wrap-btn100-form-btn">
@@ -173,7 +173,7 @@ const MessageListPage: React.FC = () => {
                   className="btn100-form-btn"
                   onClick={handleCreateNewMessage}
                 >
-                  Nova Mensagem
+                  New Message
                 </button>
               </div>
             </div>
@@ -184,7 +184,7 @@ const MessageListPage: React.FC = () => {
                 onClick={() => navigate('/dashboard')}
                 style={{ cursor: 'pointer' }}
               >
-                Voltar ao Dashboard
+                Back to Dashboard
               </span>
             </div>
           </div>

@@ -5,8 +5,8 @@ interface MessageFormProps {
 const MessageViewForm = ({ messageId }: MessageFormProps) => {
   return (
     <div>
-      <h1>Visualização de Mensagem</h1>
-      {/* Formulário de visualização de mensagem */}
+      <h1>Message View</h1>
+      {/* Message view form */}
       messageId
     </div>
   );

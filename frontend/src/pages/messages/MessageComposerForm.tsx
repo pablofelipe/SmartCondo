@@ -74,7 +74,7 @@ const MessageComposerForm: React.FC = () => {
           setCurrentUserCondominium(data);
         }
       } catch (error) {
-        console.error('Erro ao carregar condomínios:', error);
+        console.error('Error loading condominiums:', error);
       }
     };
 
@@ -112,13 +112,13 @@ const MessageComposerForm: React.FC = () => {
           },
         );
 
-        if (!response.ok) throw new Error('Erro ao carregar torres');
+        if (!response.ok) throw new Error('Failed to load towers');
 
         const data = await response.json();
         setTowers(data);
       } catch (error) {
-        console.error('Erro ao carregar torres:', error);
-        setError('Erro ao carregar lista de torres');
+        console.error('Error loading towers:', error);
+        setError('Failed to load tower list');
       } finally {
         setIsLoadingTowers(false);
       }
@@ -168,7 +168,7 @@ const MessageComposerForm: React.FC = () => {
 
   const handleSearch = async () => {
     if (!selectedRecipientType) {
-      setError('Selecione um tipo de destinatário');
+      setError('Select a recipient type');
       return;
     }
 
@@ -181,7 +181,7 @@ const MessageComposerForm: React.FC = () => {
 
       if (selectedRecipientType == 'Resident') {
         if (searchTerm.name == '' && searchTerm.registrationNumber == '') {
-          setError('Preencha pelo menos um campo de busca');
+          setError('Fill in at least one search field');
           return;
         }
 
@@ -213,12 +213,12 @@ const MessageComposerForm: React.FC = () => {
       });
       const data = await response.json();
       if (data.length == 0) {
-        setError('Nenhum resultado encontrado');
+        setError('No results found');
         return;
       }
       setSearchResults(data);
     } catch (err) {
-      setError('Falha na busca');
+      setError('Search failed');
     } finally {
       setIsSearching(false);
     }
@@ -241,10 +241,10 @@ const MessageComposerForm: React.FC = () => {
       await sendMessage(formData);
 
       setShowSuccessToast(true);
-      // navegar após um pequeno delay para o usuário ver a mensagem
+      // Navigate after a short delay so the user sees the confirmation
       setTimeout(() => navigate('/dashboard'), 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao enviar mensagem');
+      setError(err instanceof Error ? err.message : 'Failed to send message');
     }
   };
 
@@ -256,21 +256,19 @@ const MessageComposerForm: React.FC = () => {
     selectedRecipientType == 'Resident' ||
     selectedRecipientType == 'ResidentCommitteeMember';
 
-  //console.log(`selectedRecipientType: ${selectedRecipientType}`);
-
   return (
     <div className="limiter">
       <div className="container-main">
         <div className="wrap-main">
           <div className="form-header">
-            <h2 className="form-title">Enviar Mensagem</h2>
+            <h2 className="form-title">Send Message</h2>
             <p className="form-subtitle">
-              Preencha os campos abaixo para enviar uma nova mensagem
+              Fill in the fields below to send a new message
             </p>
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* Campo de Escopo */}
+            {/* Scope field */}
             <div className="wrap-input100 validate-input">
               <select
                 className={`input100 ${formData.scope ? 'has-val' : ''}`}
@@ -283,15 +281,15 @@ const MessageComposerForm: React.FC = () => {
                   <option value="individual">Individual</option>
                 )}
                 {canSendToGroups && (
-                  <option value="condominium">Condomínio</option>
+                  <option value="condominium">Condominium</option>
                 )}
-                {canSendToGroups && <option value="tower">Torre</option>}
-                {canSendToGroups && <option value="floor">Andar</option>}
+                {canSendToGroups && <option value="tower">Tower</option>}
+                {canSendToGroups && <option value="floor">Floor</option>}
               </select>
-              <span className="focus-input100" data-placeholder="Escopo"></span>
+              <span className="focus-input100" data-placeholder="Scope"></span>
             </div>
 
-            {/* Campo de Destinatário (condicional) */}
+            {/* Recipient field (conditional) */}
             {canSendToIndividuals && formData.scope == 'individual' && (
               <div className="user-search-section">
                 <div className="wrap-input100 validate-input">
@@ -310,7 +308,7 @@ const MessageComposerForm: React.FC = () => {
                     }}
                     required
                   >
-                    <option value="">Selecione o tipo de destinatário</option>
+                    <option value="">Select the recipient type</option>
                     {allowedRecipientTypes.map((type) => (
                       <option key={type} value={type}>
                         {getUserTypeDescriptionByName(type)}
@@ -319,11 +317,11 @@ const MessageComposerForm: React.FC = () => {
                   </select>
                   <span
                     className="focus-input100"
-                    data-placeholder="Tipo de Destinatário"
+                    data-placeholder="Recipient Type"
                   ></span>
                 </div>
 
-                {/* Container de busca responsivo */}
+                {/* Responsive search container */}
                 <div className="search-container" style={{ marginTop: '15px' }}>
                   <div
                     className="search-fields"
@@ -336,7 +334,7 @@ const MessageComposerForm: React.FC = () => {
                   >
                     {shouldShowNameField && (
                       <input
-                        placeholder="Nome"
+                        placeholder="Name"
                         value={searchTerm.name}
                         onChange={(e) =>
                           setSearchTerm({ ...searchTerm, name: e.target.value })
@@ -351,7 +349,7 @@ const MessageComposerForm: React.FC = () => {
 
                     {shouldShowRegistrationField && (
                       <input
-                        placeholder="CPF/CNPJ"
+                        placeholder="Registration number"
                         value={searchTerm.registrationNumber}
                         onChange={(e) =>
                           setSearchTerm({
@@ -385,7 +383,7 @@ const MessageComposerForm: React.FC = () => {
                             disabled={isSearching || !selectedRecipientType}
                             style={{ width: '100%' }}
                           >
-                            {isSearching ? 'Buscando...' : 'Buscar'}
+                            {isSearching ? 'Searching...' : 'Search'}
                           </button>
                         </div>
                       </div>
@@ -410,7 +408,7 @@ const MessageComposerForm: React.FC = () => {
                         required
                         style={{ width: '100%' }}
                       >
-                        <option value="">Selecione um usuário</option>
+                        <option value="">Select a user</option>
                         {searchResults.map((user) => (
                           <option key={user.id} value={user.id}>
                             {user.name}
@@ -421,7 +419,7 @@ const MessageComposerForm: React.FC = () => {
                       </select>
                       <span
                         className="focus-input100"
-                        data-placeholder="Destinatário"
+                        data-placeholder="Recipient"
                       ></span>
                     </div>
                   </div>
@@ -429,13 +427,13 @@ const MessageComposerForm: React.FC = () => {
               </div>
             )}
 
-            {/* SystemAdmin: Mostra dropdown com todos os condomínios */}
+            {/* SystemAdmin: shows dropdown with every condominium */}
             {formData.scope != 'individual' &&
               canManageAllCondominiums() &&
               !isSysAdmin && (
                 <div className="wrap-input100 validate-input">
                   <label htmlFor="condominium" className="input-label">
-                    Condomínio
+                    Condominium
                   </label>
                   <select
                     className={`input100 ${
@@ -446,7 +444,7 @@ const MessageComposerForm: React.FC = () => {
                     onChange={handleChange}
                     required
                   >
-                    <option value="">Selecione</option>
+                    <option value="">Select</option>
                     {condominiums.map((condo: any) => (
                       <option key={condo.id} value={condo.id}>
                         {condo.name}
@@ -456,12 +454,12 @@ const MessageComposerForm: React.FC = () => {
                 </div>
               )}
 
-            {/* Não-SystemAdmin: Mostra apenas o condomínio vinculado (sem dropdown) */}
+            {/* Non-SystemAdmin: shows only the linked condominium (no dropdown) */}
             {formData.scope != 'individual' &&
               !canManageAllCondominiums() &&
               currentUserCondominium && (
                 <div className="wrap-input100">
-                  <label className="input-label">Condomínio</label>
+                  <label className="input-label">Condominium</label>
                   <input
                     type="text"
                     className="input100"
@@ -476,7 +474,7 @@ const MessageComposerForm: React.FC = () => {
                 </div>
               )}
 
-            {/* Seletor de Torre */}
+            {/* Tower selector */}
             {(formData.scope === 'tower' || formData.scope === 'floor') && (
               <div
                 className="wrap-input100 validate-input"
@@ -490,10 +488,10 @@ const MessageComposerForm: React.FC = () => {
                   required
                   disabled={isLoadingTowers || !condominiumId}
                 >
-                  <option value="">Selecione a Torre</option>
+                  <option value="">Select the Tower</option>
                   {isLoadingTowers ? (
                     <option value="" disabled>
-                      Carregando torres...
+                      Loading towers...
                     </option>
                   ) : (
                     towers.map((tower) => (
@@ -505,12 +503,12 @@ const MessageComposerForm: React.FC = () => {
                 </select>
                 <span
                   className="focus-input100"
-                  data-placeholder="Torre"
+                  data-placeholder="Tower"
                 ></span>
               </div>
             )}
 
-            {/* Andar */}
+            {/* Floor */}
             {formData.scope === 'floor' && (
               <div className="wrap-input100 validate-input">
                 <input
@@ -523,12 +521,12 @@ const MessageComposerForm: React.FC = () => {
                 />
                 <span
                   className="focus-input100 focus-number"
-                  data-placeholder="Andar"
+                  data-placeholder="Floor"
                 ></span>
               </div>
             )}
 
-            {/* Campo de Conteúdo da Mensagem */}
+            {/* Message content field */}
             <div className="wrap-input100 validate-input">
               <textarea
                 className={`input100 ${formData.content ? 'has-val' : ''}`}
@@ -540,16 +538,16 @@ const MessageComposerForm: React.FC = () => {
               />
               <span
                 className="focus-input100"
-                data-placeholder="Mensagem"
+                data-placeholder="Message"
               ></span>
             </div>
 
-            {/* Botão de Envio */}
+            {/* Send button */}
             <div className="container-btn100-form-btn">
               <div className="wrap-btn100-form-btn">
                 <div className="btn100-form-bgbtn"></div>
                 <button type="submit" className="btn100-form-btn">
-                  Enviar
+                  Send
                 </button>
               </div>
             </div>
@@ -562,7 +560,7 @@ const MessageComposerForm: React.FC = () => {
 
             {showSuccessToast && (
               <div className="toast-success">
-                Mensagem enviada com sucesso!
+                Message sent successfully!
                 <button onClick={() => setShowSuccessToast(false)}>×</button>
               </div>
             )}
@@ -573,7 +571,7 @@ const MessageComposerForm: React.FC = () => {
                 onClick={() => navigate('/dashboard')}
                 style={{ cursor: 'pointer' }}
               >
-                Voltar ao Dashboard
+                Back to Dashboard
               </span>
             </div>
           </form>

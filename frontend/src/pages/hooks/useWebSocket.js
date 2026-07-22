@@ -12,8 +12,8 @@ export const useWebSocket = (userId, onMessage) => {
     ws.current = new WebSocket(websocketUrl);
 
     ws.current.onopen = () => {
-      console.log('WebSocket conectado');
-      // Reconectar automaticamente se desconectado
+      console.log('WebSocket connected');
+      // Automatically reconnect if disconnected
       localStorage.setItem('websocket_connected', 'true');
     };
 
@@ -22,20 +22,20 @@ export const useWebSocket = (userId, onMessage) => {
         const data = JSON.parse(event.data);
         onMessage(data);
       } catch (error) {
-        console.error('Erro ao processar mensagem:', error);
+        console.error('Error processing message:', error);
       }
     };
 
     ws.current.onclose = () => {
-      console.log('WebSocket desconectado');
+      console.log('WebSocket disconnected');
       localStorage.removeItem('websocket_connected');
 
-      // Tentar reconectar após 5 segundos
+      // Try to reconnect after 5 seconds
       setTimeout(() => connect(), 5000);
     };
 
     ws.current.onerror = (error) => {
-      console.error('Erro WebSocket:', error);
+      console.error('WebSocket error:', error);
     };
   }, [onMessage]);
 
