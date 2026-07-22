@@ -119,15 +119,12 @@ The canonical deployment target is a single Docker image, run unmodified on eith
 - Generic SMTP e-mail delivery, replacing AWS SES
 
 **Planned:**
-- [ ] Frontend component tests
 - [ ] Integration tests against a real PostgreSQL instance (Testcontainers)
 - [ ] Wire frontend tests into CI
-- [ ] Booking of shared spaces (party hall, barbecue area)
-- [ ] Visitor pre-registration and gate access log
-- [ ] Billing: condominium fee tracking and delinquency reports
 
 **Non-goals (deliberate, see [trade-offs](docs/architecture/overview.md#trade-offs)):**
 - Kubernetes, a metrics/tracing stack (Prometheus/Grafana), asynchronous messaging, additional cloud providers, CI/CD automation of the deploy
+- Frontend component tests — the business complexity is intentionally concentrated in the backend, where it is extensively covered by automated tests; the frontend is a deliberately thin CRUD client over that API
 
 **Technical debt:**
 - Lambda hosting mode is not required to keep feature parity with the container-first path going forward (accepted tradeoff, ADR-0011)
