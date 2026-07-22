@@ -12,7 +12,6 @@ using SmartCondoApi.Dto;
 using SmartCondoApi.Infra;
 using SmartCondoApi.Models;
 using SmartCondoApi.Services.Auth;
-using SmartCondoApi.Services.Crypto;
 using SmartCondoApi.Services.Email;
 using SmartCondoApi.Services.LinkGenerator;
 using SmartCondoApi.Services.Message;
@@ -31,7 +30,6 @@ namespace SmartCondoApi.Tests.Controllers
         protected IConfiguration _configuration;
         protected IMessageService _messageService;
         protected INotificationService _notificationService;
-        protected ICryptoService _cryptoService;
 
         [TestInitialize]
         protected async Task InitializeBase()
@@ -46,10 +44,7 @@ namespace SmartCondoApi.Tests.Controllers
 
             _messageService = new MessageService(_context, loggerMock.Object);
 
-            _notificationService = new NotificationService(_context, new Mock<IAmazonApiGatewayManagementApi>().Object);
-
-
-            _cryptoService = new CryptoServiceTests();
+            _notificationService = new NotificationService(_context, new Mock<IAmazonApiGatewayManagementApi>().Object, new Mock<ILogger<NotificationService>>().Object);
         }
 
         protected static OkObjectResult SuccessAssert(ActionResult result)
@@ -64,7 +59,7 @@ namespace SmartCondoApi.Tests.Controllers
 
         protected AuthController LoadAuthController()
         {
-            var dependencies = new AuthDependencies(_context, _userManager, _configuration, _cryptoService);
+            var dependencies = new AuthDependencies(_context, _userManager, _configuration);
 
             var userService = new AuthService(dependencies);
 
@@ -114,7 +109,7 @@ namespace SmartCondoApi.Tests.Controllers
             mockRequest.Setup(r => r.Host).Returns(new HostString("localhost", 5254));
             mockHttpContext.Setup(c => c.Request).Returns(mockRequest.Object);
 
-            var userProfileServiceDependencies = new UserProfileServiceDependencies(_context, _userManager, _cryptoService);
+            var userProfileServiceDependencies = new UserProfileServiceDependencies(_context, _userManager);
 
             var loggerMockService = new Mock<ILogger<UserProfileService>>();
 

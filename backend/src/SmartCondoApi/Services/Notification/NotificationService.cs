@@ -11,11 +11,13 @@ namespace SmartCondoApi.Services.Notification
     {
         private readonly SmartCondoContext _context;
         private readonly IAmazonApiGatewayManagementApi _apiGateway;
+        private readonly ILogger<NotificationService> _logger;
 
-        public NotificationService(SmartCondoContext context, IAmazonApiGatewayManagementApi apiGateway)
+        public NotificationService(SmartCondoContext context, IAmazonApiGatewayManagementApi apiGateway, ILogger<NotificationService> logger)
         {
             _context = context;
             _apiGateway = apiGateway;
+            _logger = logger;
         }
 
         public async Task NotifyNewMessageAsync(Models.Message message)
@@ -68,8 +70,7 @@ namespace SmartCondoApi.Services.Notification
                 }
                 catch (Exception ex)
                 {
-                    // Log do erro
-                    Console.WriteLine($"Erro ao notificar usuário {userId}: {ex.Message}");
+                    _logger.LogError(ex, "Erro ao notificar usuário {UserId}", userId);
                 }
             }
 

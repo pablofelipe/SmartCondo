@@ -17,7 +17,6 @@ using SmartCondoApi.Infra;
 using SmartCondoApi.Models;
 using SmartCondoApi.Services.Auth;
 using SmartCondoApi.Services.Condominium;
-using SmartCondoApi.Services.Crypto;
 using SmartCondoApi.Services.Email;
 using SmartCondoApi.Services.ForgotPassword;
 using SmartCondoApi.Services.LinkGenerator;
@@ -115,23 +114,13 @@ public class Startup
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
             // Login is the highest-value target for brute-forcing credentials, so it gets the
-            // tightest window. PublicKeyRateLimit already had an [EnableRateLimiting] attribute on
-            // it with nothing behind it - this is what makes that attribute actually do something.
+            // tightest window.
             options.AddPolicy("LoginRateLimit", httpContext =>
                 RateLimitPartition.GetFixedWindowLimiter(
                     partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                     factory: _ => new FixedWindowRateLimiterOptions
                     {
                         PermitLimit = 5,
-                        Window = TimeSpan.FromMinutes(1)
-                    }));
-
-            options.AddPolicy("PublicKeyRateLimit", httpContext =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    factory: _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = 20,
                         Window = TimeSpan.FromMinutes(1)
                     }));
         });
@@ -179,7 +168,6 @@ public class Startup
         services.AddScoped<IForgotPasswordService, ForgotPasswordService>();
         services.AddScoped<ITowerService, TowerService>();
         services.AddScoped<ICondominiumService, CondominiumService>();
-        services.AddScoped<ICryptoService, CryptoService>();
         services.AddScoped<IMessageService, MessageService>();
         services.AddScoped<IVehicleService, VehicleService>();
 

@@ -108,10 +108,5 @@ namespace SmartCondoApi.Services.Auth
         {
             return new TokenHandler(_dependencies.Configuration).Generate(user.Id.ToString(), user.Email, userType, DateTime.Now.AddDays(1));
         }
-
-        public AuthKeyDTO GetPublicKey()
-        {
-            return null;
-        }
     }
 }

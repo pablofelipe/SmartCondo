@@ -62,28 +62,7 @@ namespace SmartCondoApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Erro inesperado no login.");
-                return StatusCode(500, new { error = "An unexpected error occurred" });
-            }
-        }
-
-        [EnableRateLimiting("PublicKeyRateLimit")]
-        [HttpGet("public-key")]
-        [AllowAnonymous]
-        public ActionResult GetPublicKey()
-        {
-            try
-            {
-                var result = _authService.GetPublicKey();
-
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro ao gerar chave pública.");
-                return StatusCode(500, new
-                {
-                    Message = "Erro interno ao processar chave"
-                });
+                return StatusCode(500, new { message = "An unexpected error occurred" });
             }
         }
     }

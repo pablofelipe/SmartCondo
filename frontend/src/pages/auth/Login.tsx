@@ -7,8 +7,6 @@ import '../../styles/util.css';
 import '../../styles/login.css';
 import '../../fonts/iconic/css/material-design-iconic-font.css';
 import '../../fonts/iconic/css/style.css';
-//import { encryptData } from '../../utils/CryptoUtils';
-//import { getPublicKey, resetCache } from '../../services/authService';
 
 const Login: React.FC = () => {
   const { login } = useAuth();
@@ -32,12 +30,7 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      //const publicKey = await getPublicKey();
-
-      console.log('url configurada:', config.apiUrl);
-
-      //let secret = await encryptData(secretScreen, publicKey);
-      let secret = secretScreen;
+      const secret = secretScreen;
 
       const response = await fetch(`${config.apiUrl}/Auth/login`, {
         method: 'POST',
@@ -50,10 +43,6 @@ const Login: React.FC = () => {
       if (!response.ok) {
         const errorData = await response.json(); // Captura a mensagem de erro do backend
         const errorMessage = errorData.message || 'Erro desconhecido';
-
-        //if (errorMessage.includes('Chave')) {
-        //  resetCache();
-        //}
 
         switch (response.status) {
           case 400: // BadRequest (InvalidCredentialsException)
