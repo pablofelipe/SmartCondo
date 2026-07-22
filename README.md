@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/pablofelipe/SmartCondo/actions/workflows/ci.yml/badge.svg)](https://github.com/pablofelipe/SmartCondo/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/pablofelipe/SmartCondo)](https://github.com/pablofelipe/SmartCondo/releases)
+[![Last Commit](https://img.shields.io/github/last-commit/pablofelipe/SmartCondo)](https://github.com/pablofelipe/SmartCondo/commits/main)
 
 Condominium administration platform that simplifies user management, communication between residents and administrators, and hierarchical permission control.
 
