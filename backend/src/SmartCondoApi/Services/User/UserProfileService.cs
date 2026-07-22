@@ -386,11 +386,6 @@ namespace SmartCondoApi.Services.User
             };
         }
 
-        public async Task<IEnumerable<UserProfile>> Get()
-        {
-            return await _dependencies.Context.UserProfiles.ToListAsync();
-        }
-
         public async Task<UserProfileEditDTO> Get(long id, AuthenticatedActor actor)
         {
             var userProfile = await _dependencies.Context.UserProfiles.FindAsync(id);

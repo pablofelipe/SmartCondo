@@ -1,5 +1,4 @@
 ﻿using SmartCondoApi.Dto;
-using SmartCondoApi.Models;
 using SmartCondoApi.Models.Permissions;
 
 namespace SmartCondoApi.Services.User
@@ -9,8 +8,6 @@ namespace SmartCondoApi.Services.User
         Task<UserProfileResponseDTO> Add(UserProfileCreateDTO userCreateDTO, AuthenticatedActor actor);
 
         Task<UserProfileResponseDTO> Update(long userId, UserProfileUpdateDTO userUpdateDTO, AuthenticatedActor actor);
-
-        Task<IEnumerable<UserProfile>> Get();
 
         Task<UserProfileEditDTO> Get(long id, AuthenticatedActor actor);
 

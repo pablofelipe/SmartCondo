@@ -61,8 +61,7 @@ namespace SmartCondoApi.Tests.GraphQL
                             .AddMutationType<Mutation>()
                             .AddTypeExtension<VehicleQueries>()
                             .AddTypeExtension<VehicleMutations>()
-                            .AddVehicleTypes()
-                            .AddProjections();
+                            .AddVehicleTypes();
                     });
                     webBuilder.Configure(app =>
                     {

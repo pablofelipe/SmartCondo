@@ -235,7 +235,6 @@ public class Startup
             .AddTypeExtension<VehicleQueries>()
             .AddTypeExtension<VehicleMutations>()
             .AddVehicleTypes()
-            .AddProjections()
             .ModifyRequestOptions(options =>
             {
                 options.IncludeExceptionDetails = _env.IsDevelopment();

@@ -160,14 +160,6 @@ namespace SmartCondoApi.Controllers
             }
         }
 
-        ////Obter todos os usuários
-        //[HttpGet]
-        //[Authorize]
-        //public async Task<IEnumerable<UserProfile>> Get()
-        //{
-        //    return await _dependencies.UserProfileService.Get();
-        //}
-
         // Obter um usuário por ID
         [HttpGet("{id}")]
         [Authorize]
