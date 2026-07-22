@@ -103,7 +103,7 @@ cd backend
 dotnet test SmartCondo.sln
 ```
 
-The suite covers authentication flows, messaging, user registration rules and supporting services, mostly using an in-memory database and mocked dependencies. A separate integration suite (`tests/SmartCondoApi.Tests/Integration/`) runs migrations and cascade-delete behavior against a real PostgreSQL instance via Testcontainers, and requires a local Docker daemon. Frontend tests exist (`frontend/src/utils/ApiUtils.test.tsx`, Jest) but are not yet wired into the CI pipeline — run them locally with `npm test`.
+The suite covers authentication flows, messaging, user registration rules and supporting services, mostly using an in-memory database and mocked dependencies. A separate integration suite (`tests/SmartCondoApi.Tests/Integration/`) runs migrations and cascade-delete behavior against a real PostgreSQL instance via Testcontainers, and requires a local Docker daemon. Frontend tests (`frontend/src/utils/ApiUtils.test.tsx`, Jest) run with `npm test` and are wired into CI.
 
 More guides: [getting started from a clean machine](docs/guides/getting-started.md), [functional validation walkthrough](docs/guides/functional-validation.md), [troubleshooting](docs/guides/troubleshooting.md).
 
