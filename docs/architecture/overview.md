@@ -2,16 +2,7 @@
 
 ## System context
 
-SmartCondo is a client–server application with three deployable units: a React PWA, an ASP.NET Core API and a PostgreSQL database.
-
-```mermaid
-flowchart LR
-    Browser["React PWA<br/>(served by nginx)"] -->|"REST /api/v1"| API["ASP.NET Core 8 API"]
-    Browser -->|"GraphQL /graphql"| API
-    API --> DB[("PostgreSQL")]
-    API -->|SMTP| Mail["E-mail provider"]
-    API -->|"push via WebSocket"| APIGW["AWS API Gateway<br/>(optional)"]
-```
+SmartCondo is a client–server application with three deployable units: a React PWA, an ASP.NET Core API and a PostgreSQL database. See [`docs/diagrams/architecture.mmd`](../diagrams/architecture.mmd) for the component diagram (canonical — not duplicated here to avoid the two copies drifting apart).
 
 ## Backend layering
 
@@ -22,7 +13,7 @@ Controller → Service (business rules) → SmartCondoContext (EF Core) → Post
 ```
 
 - **Controllers** (`Controllers/`) validate the request shape and translate domain exceptions (`Exceptions/`) into HTTP status codes; `ErrorHandlingMiddleware` is the final safety net.
-- **Services** (`Services/`, one folder per domain: Auth, User, Condominium, Message, Vehicle, Email, Notification, Crypto, ForgotPassword, LinkGenerator) contain the business logic and are wired through constructor injection.
+- **Services** (`Services/`, one folder per domain: Auth, User, Condominium, Message, Vehicle, Email, Notification, ForgotPassword, LinkGenerator) contain the business logic and are wired through constructor injection.
 - **Data** — EF Core entities in `Models/`, schema history in `Migrations/`.
 - **Authorization** — a shared kernel, not per-service logic: `Models/Permissions/ResourceAuthorization` composes Capability (`RolePermissions`), Scope and Relationship against an `AuthenticatedActor` resolved fresh per request by `Infra/IAuthenticatedActorResolver`. See `docs/adr/0005` through `0010` for the full domain model and its evolution.
 
@@ -54,7 +45,12 @@ The vehicle domain is additionally exposed through HotChocolate at `/graphql` wi
 
 ## Notifications
 
-`WebSocketConnection` tracks connected clients; `NotificationService` pushes messages through **AWS API Gateway Management API** when a WebSocket endpoint is configured (`WebSocket:ApiUrl`). Without it, the platform still works — notifications degrade to in-app polling of messages.
+`WebSocketConnection` tracks connected clients. Two `INotificationService` implementations exist, selected once in DI by hosting mode (`Startup.IsLambdaHosted`), not by a runtime abstraction layer:
+
+- **Native WebSocket** (`NativeWebSocketNotificationService`) — the default for container/Kestrel hosting (docker-compose, Azure Container Apps, AWS ECS/Fargate). Uses ASP.NET Core's built-in `UseWebSockets()` to hold connections in-process and push directly; no cloud SDK involved. The frontend connects to `/ws` (token passed as a query parameter, validated by `WebSocketTokenValidator`); nginx proxies `/ws` in the Docker setup (`docker/nginx.conf`).
+- **AWS API Gateway** (`NotificationService`) — used exclusively by the Lambda-hosted mode, which cannot hold a persistent in-process connection; pushes through `IAmazonApiGatewayManagementApi.PostToConnectionAsync` instead. Requires `WebSocket:ApiUrl`.
+
+Both share recipient resolution (`MessageRecipientResolver`) so which users get notified for a given message depends only on the message's scope, never on the delivery mechanism. See [ADR-0011](../adr/0011-container-first-cloud-agnostic-deployment.md).
 
 ## Database lifecycle
 
@@ -67,8 +63,24 @@ Migrations are EF Core-based. Two application paths exist:
 
 | Mode | Entry point | Notes |
 |---|---|---|
-| Container / host | `Program.Main` | Used by docker-compose; Kestrel on port 8080 |
-| AWS Lambda | `LambdaEntryPoint` | Same application behind API Gateway; logging via Lambda logger |
+| Container / host | `Program.Main` | Primary, portable path (ADR-0011). Kestrel on port 8080. Used by docker-compose locally, and by Azure Container Apps / AWS ECS-Fargate in production — same unmodified Docker image on both. Provisioned by Terraform, see [`infra/README.md`](../../infra/README.md). |
+| AWS Lambda | `LambdaEntryPoint` | Secondary, non-portable mode (ADR-0011). Same application behind API Gateway; logging via Lambda logger; own DI container (`Services/Lambda/LambdaServiceProvider`). |
+
+## Trade-offs
+
+Decisions with real alternatives considered, consolidated here instead of scattered across ADRs:
+
+- **Generic SMTP instead of AWS SES for outbound e-mail** — SES was the only genuine AWS runtime coupling in the email path (ADR-0011). A single portable SMTP implementation is simpler to maintain than a provider switch nobody exercises for one low-volume feature (account confirmation, password reset).
+- **Native in-process WebSocket as the default, AWS API Gateway as secondary** — the container-first path (docker-compose, Azure, AWS ECS/Fargate) doesn't need a cloud SDK to hold a connection; only Lambda does, because it cannot hold one itself. Keeping both, selected by hosting mode, avoided introducing a runtime abstraction layer over a choice that's actually fixed per deployment.
+- **Terraform over Bicep/CDK/SAM** — the only option that covers both Azure and AWS with one tool; using a single tool across clouds reinforces the portability claim rather than undermining it with two unrelated toolchains. Two independent root modules (`infra/azure/`, `infra/aws/`), not one cross-cloud abstraction — the providers' resource models differ enough that unifying them would only add complexity.
+- **Hand-rolled GraphQL filtering instead of HotChocolate's `[UseProjection]`/`[UseFiltering]` middleware** — the authorization model has to shape the query around Capability/Scope/Relationship before any filter runs; the automatic middleware has no seam for that. See [ADR-0003](../adr/0003-graphql-for-the-vehicle-domain.md)'s amendment.
+
+**Deliberately out of scope:**
+- **Kubernetes** — the portability claim is proven at the container-image level (one Docker image on two clouds' managed-container services); an orchestrator is a separate concern not exercised by this project.
+- **Prometheus/Grafana or any metrics/tracing stack** — not present. Observability today is structured logging only (`ILogger`, correlation ID per request).
+- **Asynchronous messaging (queues, event bus)** — the codebase has no message broker; notifications and e-mail are synchronous calls from the request path.
+- **CI/CD automation of the deploy** — the near-term goal is a documented, reproducible *manual* path under 30 minutes (ADR-0011), not push-button automation.
+- **Additional cloud providers (GCP, etc.)** — only Azure and AWS are validated targets, by design.
 
 ## Configuration
 

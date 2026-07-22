@@ -79,6 +79,8 @@ dotnet test SmartCondo.sln
 
 Tests use MSTest with Moq and the EF Core InMemory provider — no external services required.
 
-## AWS Lambda deployment (optional)
+## Deployment
 
-`LambdaEntryPoint` allows hosting the same application as an AWS Lambda function behind API Gateway; `aws-lambda-tools-defaults.json` carries the deployment defaults for the .NET Lambda CLI.
+The primary, portable deployment path is the Docker image built from `docker/backend.Dockerfile`, run unmodified as a container on Azure Container Apps or AWS ECS/Fargate — provisioned by Terraform, see [`infra/README.md`](../infra/README.md) and [ADR-0011](../docs/adr/0011-container-first-cloud-agnostic-deployment.md).
+
+`LambdaEntryPoint` additionally allows hosting the same application as an AWS Lambda function behind API Gateway — a secondary, non-portable mode (`aws-lambda-tools-defaults.json` carries the deployment defaults for the .NET Lambda CLI).

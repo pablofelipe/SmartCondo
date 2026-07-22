@@ -56,3 +56,12 @@ The IaC was validated the same way the manual deploys were: the manually-created
 **Support for additional cloud providers (GCP, etc.).** Explicitly not a goal. The two-consumer/concrete-coupling rule already argues against speculative extra adapters; only Azure and AWS are validated targets, by design, not by omission.
 
 **Retiring AWS Lambda hosting entirely.** Not decided now. It remains a documented secondary path. Revisit if it becomes a maintenance burden that nobody exercises, or if a future need re-elevates it.
+
+## Amendment
+
+The Decision section above lists the per-cloud service as an open choice ("Container Apps or App Service for Containers" / "App Runner or ECS/Fargate"). Both are now resolved, matching the "IaC tooling" resolution already recorded under Deferred decisions:
+
+- **Azure:** Container Apps + PostgreSQL Flexible Server. Consumption-tier, `min_replicas = 0`.
+- **AWS:** ECS/Fargate + RDS PostgreSQL, not App Runner — App Runner requires the account to be on AWS's Paid plan (`SubscriptionRequiredException` on a Free-plan account), so ECS/Fargate was substituted; it proves the same portability claim. `desired_count = 0` by default is Fargate's equivalent of Container Apps' scale-to-zero.
+
+Both are provisioned by Terraform (`infra/azure/`, `infra/aws/`), validated end to end (health check, migration, login, an authenticated WebSocket round trip) by destroying manually-created resources and recreating them from `terraform apply` alone. See [`infra/README.md`](../../infra/README.md) for the runbook.

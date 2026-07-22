@@ -18,8 +18,9 @@ SmartCondo/
 │   ├── tests/SmartCondoApi.Tests/
 │   └── SmartCondo.sln
 ├── frontend/              # React 19 + TypeScript PWA
-├── docs/                  # Architecture, ADRs, diagrams and API reference
+├── docs/                  # Architecture, ADRs, diagrams, API reference and guides
 ├── docker/                # Dockerfiles and nginx configuration
+├── infra/                 # Terraform (Azure and AWS), one root module per cloud
 ├── .github/workflows/     # CI pipeline
 └── docker-compose.yml     # Full local environment (API + frontend + PostgreSQL)
 ```
@@ -31,26 +32,19 @@ SmartCondo/
 - **Condominium management** — CRUD for condominiums, towers, apartments and user profiles
 - **Vehicle registry** — resident vehicle management exposed through a GraphQL endpoint (queries, mutations, filtering)
 - **Messaging** — direct messages between residents and administration, with read tracking
-- **Notifications** — real-time notification delivery through WebSocket connections (AWS API Gateway)
+- **Notifications** — real-time delivery through WebSocket connections: a native in-process implementation by default (container hosting), AWS API Gateway when running as a Lambda function
 - **Dashboard** — aggregated statistics for administrators
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    Browser["React PWA<br/>(nginx)"] -->|"/api/v1 (REST)"| API["ASP.NET Core 8 API"]
-    Browser -->|"/graphql"| API
-    API --> DB[("PostgreSQL")]
-    API -->|SMTP| Mail["E-mail provider"]
-    API -->|WebSocket push| APIGW["AWS API Gateway<br/>(optional)"]
-```
+Component diagram: [docs/diagrams/architecture.mmd](docs/diagrams/architecture.mmd).
 
 - The API exposes **REST** endpoints (versioned under `/api/v1`) for most resources and a **GraphQL** endpoint (HotChocolate) for vehicle queries and mutations.
 - Persistence uses **Entity Framework Core** with **PostgreSQL**; schema changes are tracked as EF Core migrations and applied through a key-protected migration endpoint, which also seeds roles and the initial administrator account.
-- The API can run as a regular container/host or as an **AWS Lambda** function behind API Gateway (`LambdaEntryPoint`).
+- **Deployment is container-first and cloud-agnostic** (ADR-0011): the same Docker image runs unmodified on Azure Container Apps and AWS ECS/Fargate, provisioned by Terraform — see [infra/](infra/README.md). AWS Lambda hosting (`LambdaEntryPoint`) remains available as a secondary, non-portable mode.
 - All configuration (database, JWT signing key, SMTP, CORS origins) comes from **environment variables** — see [.env.example](.env.example).
 
-More detail in [docs/architecture](docs/architecture/overview.md), decision records in [docs/adr](docs/adr), and API reference in [docs/api](docs/api/rest-api.md).
+More detail in [docs/architecture](docs/architecture/overview.md), decision records in [docs/adr](docs/adr), API reference in [docs/api](docs/api/rest-api.md), and setup/validation guides in [docs/guides](docs/guides).
 
 ## Tech stack
 
@@ -59,8 +53,8 @@ More detail in [docs/architecture](docs/architecture/overview.md), decision reco
 | Backend | .NET 8, ASP.NET Core, Entity Framework Core 9, HotChocolate (GraphQL), ASP.NET Core Identity, JWT, Swagger |
 | Database | PostgreSQL 16 |
 | Frontend | React 19, TypeScript, Apollo Client, React Router, CRA (PWA template) |
-| Tests | MSTest, Moq, EF Core InMemory |
-| Infrastructure | Docker, docker-compose, nginx, GitHub Actions, AWS Lambda (optional deployment target) |
+| Tests | MSTest, Moq, EF Core InMemory (backend); Jest, React Testing Library (frontend, partial coverage) |
+| Infrastructure | Docker, docker-compose, nginx, GitHub Actions, Terraform (Azure Container Apps + AWS ECS/Fargate), AWS Lambda (secondary deployment mode) |
 
 ## Running locally
 
@@ -107,15 +101,34 @@ cd backend
 dotnet test SmartCondo.sln
 ```
 
-The suite covers authentication flows, messaging, user registration rules and supporting services, using an in-memory database and mocked dependencies.
+The suite covers authentication flows, messaging, user registration rules and supporting services, using an in-memory database and mocked dependencies. Frontend tests exist (`frontend/src/utils/ApiUtils.test.tsx`, Jest) but are not yet wired into the CI pipeline — run them locally with `npm test`.
+
+More guides: [getting started from a clean machine](docs/guides/getting-started.md), [functional validation walkthrough](docs/guides/functional-validation.md), [troubleshooting](docs/guides/troubleshooting.md).
+
+## Deployment
+
+The canonical deployment target is a single Docker image, run unmodified on either cloud's managed-container service, provisioned by Terraform — see [ADR-0011](docs/adr/0011-container-first-cloud-agnostic-deployment.md) and [infra/README.md](infra/README.md) for the runbook. AWS Lambda hosting (`LambdaEntryPoint`) is a secondary, non-portable mode retained for the WebSocket API Gateway path.
 
 ## Roadmap
 
+**Implemented recently:**
+- Multi-cloud infrastructure as code (Terraform, Azure Container Apps + AWS ECS/Fargate) — ADR-0011
+- Native in-process WebSocket notifications for container hosting, replacing AWS API Gateway as the default path
+- Generic SMTP e-mail delivery, replacing AWS SES
+
+**Planned:**
 - [ ] Frontend component tests
 - [ ] Integration tests against a real PostgreSQL instance (Testcontainers)
+- [ ] Wire frontend tests into CI
 - [ ] Booking of shared spaces (party hall, barbecue area)
 - [ ] Visitor pre-registration and gate access log
 - [ ] Billing: condominium fee tracking and delinquency reports
+
+**Non-goals (deliberate, see [trade-offs](docs/architecture/overview.md#trade-offs)):**
+- Kubernetes, a metrics/tracing stack (Prometheus/Grafana), asynchronous messaging, additional cloud providers, CI/CD automation of the deploy
+
+**Technical debt:**
+- Lambda hosting mode is not required to keep feature parity with the container-first path going forward (accepted tradeoff, ADR-0011)
 
 ## License
 

@@ -15,6 +15,8 @@ flowchart LR
 
     Browser -->|REST| REST
     Browser -->|GraphQL| GQL
+    Browser <-->|"WebSocket /ws"| WS["Native WebSocket<br/>(default: container/Kestrel host)"]
+    SVC --> WS
     EF --> DB[("PostgreSQL 16")]
     SVC -->|SMTP| Mail["E-mail provider"]
-    SVC -->|WebSocket push| APIGW["AWS API Gateway (optional)"]
+    SVC -.->|"WebSocket push<br/>(Lambda hosting mode only)"| APIGW["AWS API Gateway<br/>Management API"]
