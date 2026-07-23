@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePermissions } from '../hooks/usePermissions';
-import config from '../../config';
-import { getAuthHeaders } from '../../utils/ApiUtils';
+import { Condominium, getCondominiums } from '../../services/condominiumService';
+import {
+  UserSearchResult,
+  searchUsersInCondominium,
+} from '../../services/userService';
 import './userList.module.css';
-
-interface Condominium {
-  id: number;
-  name: string;
-}
 
 const UserListPage = () => {
   const navigate = useNavigate();
@@ -16,7 +14,7 @@ const UserListPage = () => {
     name: '',
     registrationNumber: '',
   });
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState('');
@@ -36,18 +34,8 @@ const UserListPage = () => {
 
   const fetchCondominiums = async () => {
     try {
-      const headers = getAuthHeaders();
-      if (!headers.Authorization) return;
-
-      const response = await fetch(`${config.apiUrl}/Condominium`, {
-        method: 'GET',
-        headers: headers,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCondominiums(data);
-      }
+      const data = await getCondominiums();
+      setCondominiums(data);
     } catch (error) {
       console.error('Error fetching condominiums:', error);
     }
@@ -85,9 +73,6 @@ const UserListPage = () => {
       if (searchTerm.registrationNumber)
         params.append('RegistrationNumber', searchTerm.registrationNumber);
 
-      const headers = getAuthHeaders();
-      if (!headers.Authorization) return;
-
       let condominiumId;
       if (isAdmin && selectedCondominium) {
         condominiumId = selectedCondominium;
@@ -98,17 +83,8 @@ const UserListPage = () => {
         condominiumId = user.condominiumId;
       }
 
-      const fullUrl = `${config.apiUrl}/Condominium/${condominiumId}/users/search?${params}`;
-
-      const response = await fetch(fullUrl, {
-        method: 'GET',
-        headers: headers,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(data);
-      }
+      const data = await searchUsersInCondominium(condominiumId, params);
+      setSearchResults(data);
     } catch (error) {
       console.error('Search error:', error);
       setError('An error occurred while searching');
@@ -236,7 +212,7 @@ const UserListPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {searchResults.map((user: any) => (
+                      {searchResults.map((user) => (
                         <tr key={user.id}>
                           <td>{user.name}</td>
                           <td>{user.registrationNumber}</td>

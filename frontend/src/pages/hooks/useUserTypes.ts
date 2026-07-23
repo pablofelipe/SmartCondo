@@ -1,12 +1,5 @@
 import { useEffect, useState } from 'react';
-import config from '../../config';
-import { getAuthHeaders } from '../../utils/ApiUtils';
-
-interface UserType {
-  id: number;
-  name: string;
-  description: string;
-}
+import { getUserTypes, UserType } from '../../services/userService';
 
 export const useUserTypes = () => {
   const [userTypes, setUserTypes] = useState<Record<string, UserType>>({});
@@ -14,29 +7,23 @@ export const useUserTypes = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const headers = getAuthHeaders();
+      try {
+        const data = await getUserTypes();
 
-      if (!headers.Authorization) {
-        return;
+        const typesMap = data.reduce(
+          (acc, type) => {
+            acc[type.name] = type;
+            return acc;
+          },
+          {} as Record<string, UserType>,
+        );
+
+        setUserTypes(typesMap);
+      } catch (error) {
+        console.error('Error loading user types:', error);
+      } finally {
+        setLoading(false);
       }
-
-      var fullUrl = `${config.apiUrl}/UserType`;
-
-      //console.log(`Searching url: ${fullUrl}`);
-
-      const response = await fetch(fullUrl, {
-        headers: headers,
-      });
-
-      const data: UserType[] = await response.json();
-
-      const typesMap = data.reduce((acc, type) => {
-        acc[type.name] = type;
-        return acc;
-      }, {} as Record<string, UserType>);
-
-      setUserTypes(typesMap);
-      setLoading(false);
     };
 
     fetchData();

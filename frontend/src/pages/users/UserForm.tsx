@@ -3,10 +3,23 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './userForm.module.css';
 import '../../styles/util.css';
-import config from '../../config';
-import { getAuthHeaders } from '../../utils/ApiUtils';
 import { usePermissions } from '../hooks/usePermissions';
 import { DeleteConfirmationModal } from '../../utils/DeleteConfirmationModal';
+import {
+  getUser,
+  createUser,
+  updateUser,
+  deleteUser,
+  getUserTypes,
+  UserType,
+} from '../../services/userService';
+import {
+  getCondominiums,
+  getCondominium,
+  Condominium,
+  CondominiumDetail,
+} from '../../services/condominiumService';
+import { getTowersByCondominium, Tower } from '../../services/towerService';
 
 type UserFormMode = 'create' | 'edit' | 'view';
 
@@ -83,11 +96,11 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
     type: 'success' | 'error';
   } | null>(null);
 
-  const [condominiums, setCondominiums] = useState([]);
+  const [condominiums, setCondominiums] = useState<Condominium[]>([]);
   const [currentUserCondominium, setCurrentUserCondominium] =
-    useState<any>(null);
-  const [userTypes, setUserTypes] = useState([]);
-  const [towers, setTowers] = useState([]);
+    useState<CondominiumDetail | null>(null);
+  const [userTypes, setUserTypes] = useState<UserType[]>([]);
+  const [towers, setTowers] = useState<Tower[]>([]);
   const [errors, setErrors] = useState({
     email: '',
     registration: '',
@@ -116,25 +129,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const headers = getAuthHeaders();
-
-        if (!headers.Authorization) {
-          console.error('Authentication token not found');
-          return;
-        }
-
-        const response = await fetch(`${config.apiUrl}/UserProfile/${userId}`, {
-          method: 'GET',
-          headers: headers,
-        });
-
-        console.log(`response: ${JSON.stringify(response)}`);
-
-        if (!response.ok) {
-          throw new Error(`Failed to load user: ${response.statusText}`);
-        }
-
-        const data = await response.json();
+        const data = await getUser(userId!);
 
         setUserData((prev) => ({
           ...prev,
@@ -178,9 +173,6 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
   useEffect(() => {
     const fetchCondominiums = async () => {
       try {
-        const headers = getAuthHeaders();
-        if (!headers.Authorization) return;
-
         const userString = localStorage.getItem('user');
         if (!userString) return;
 
@@ -190,21 +182,10 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
         };
 
         if (user.role == 'SystemAdministrator') {
-          const response = await fetch(`${config.apiUrl}/Condominium`, {
-            method: 'GET',
-            headers,
-          });
-          const data = await response.json();
+          const data = await getCondominiums();
           setCondominiums(data);
         } else if (user.condominiumId) {
-          const response = await fetch(
-            `${config.apiUrl}/Condominium/${user.condominiumId}`,
-            {
-              method: 'GET',
-              headers,
-            },
-          );
-          const data = await response.json();
+          const data = await getCondominium(user.condominiumId);
           setCurrentUserCondominium(data);
 
           setUserData((prev) => ({
@@ -223,18 +204,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
   useEffect(() => {
     const fetchUserTypes = async () => {
       try {
-        const headers = getAuthHeaders();
-
-        if (!headers.Authorization) {
-          return;
-        }
-
-        const response = await fetch(`${config.apiUrl}/UserType`, {
-          method: 'GET',
-          headers: headers,
-        });
-
-        const data = await response.json();
+        const data = await getUserTypes();
         setUserTypes(data);
       } catch (error) {
         console.error('Error loading user types:', error);
@@ -262,15 +232,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
           return;
         }
 
-        const headers = getAuthHeaders();
-        if (!headers.Authorization) return;
-
-        const fullUrl = `${config.apiUrl}/Tower/byCondominium/${condominiumId}`;
-        const response = await fetch(fullUrl, { method: 'GET', headers });
-
-        if (!response.ok) throw new Error('API response error');
-
-        const data = await response.json();
+        const data = await getTowersByCondominium(condominiumId);
         setTowers(data);
       } catch (error) {
         console.error('Error loading towers:', error);
@@ -385,15 +347,9 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
     setLoading((prev) => ({ ...prev, delete: true }));
 
     try {
-      const response = await fetch(`${config.apiUrl}/UserProfile/${userId}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
-
-      if (response.ok) {
-        setMessage({ text: 'User deleted successfully', type: 'success' });
-        navigate('/users');
-      }
+      await deleteUser(userId!);
+      setMessage({ text: 'User deleted successfully', type: 'success' });
+      navigate('/users');
     } catch (error) {
       setMessage({ text: 'Failed to delete user', type: 'error' });
     } finally {
@@ -483,7 +439,6 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
 
   const prepareFormData = async (): Promise<{
     userFormDTO: UserFormDTO;
-    jsonData: string;
   }> => {
     const userFormDTO: UserFormDTO = {
       ...userData,
@@ -517,34 +472,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
       userFormDTO.registrationNumber,
     );
 
-    return {
-      userFormDTO,
-      jsonData: JSON.stringify(userFormDTO),
-    };
-  };
-
-  const handleApiError = async (response: Response): Promise<never> => {
-    const errorData = await response.json();
-
-    let errorMessage = '';
-    if (errorData.errors) {
-      errorMessage = Object.values(errorData.errors).flat().join('\n');
-    } else {
-      errorMessage = errorData.message || 'Unknown error';
-    }
-
-    switch (response.status) {
-      case 400:
-        throw new Error(errorMessage);
-      case 401:
-        throw new Error(errorMessage);
-      case 500:
-        throw new Error(
-          errorMessage || 'Server error. Please try again later.',
-        );
-      default:
-        throw new Error('Unexpected error.');
-    }
+    return { userFormDTO };
   };
 
   const handleGenericError = (err: unknown): string => {
@@ -569,22 +497,9 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
     setLoading((prev) => ({ ...prev, submit: true }));
 
     try {
-      const headers = getAuthHeaders();
-      if (!headers.Authorization) return;
+      const { userFormDTO } = await prepareFormData();
 
-      const { jsonData } = await prepareFormData();
-
-      const response = await fetch(`${config.apiUrl}/UserProfile`, {
-        method: 'POST',
-        headers,
-        body: jsonData,
-      });
-
-      if (!response.ok) {
-        await handleApiError(response);
-      }
-
-      const data = await response.json();
+      const data = await createUser(userFormDTO);
       setMessage({ text: data.message, type: 'success' });
       clearForm();
     } catch (err) {
@@ -608,21 +523,9 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
     setLoading((prev) => ({ ...prev, update: true }));
 
     try {
-      const { jsonData } = await prepareFormData();
-      const headers = getAuthHeaders();
-      if (!headers.Authorization) return;
+      const { userFormDTO } = await prepareFormData();
 
-      const response = await fetch(`${config.apiUrl}/UserProfile/${userId}`, {
-        method: 'PUT',
-        headers,
-        body: jsonData,
-      });
-
-      if (!response.ok) {
-        await handleApiError(response);
-      }
-
-      const data = await response.json();
+      const data = await updateUser(userId, userFormDTO);
       setMessage({ text: data.message, type: 'success' });
 
       setLoginData((prev) => ({ ...prev, showPasswordFields: false }));

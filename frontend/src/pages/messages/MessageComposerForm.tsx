@@ -4,15 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import { sendMessage } from '../../services/messageService';
 import { MessageCreateDto } from '../../types/message';
 import './messageComposerForm.module.css';
-import config from '../../config';
-import { getAuthHeaders } from '../../utils/ApiUtils';
 import { usePermissions } from '../hooks/usePermissions';
-
-interface Tower {
-  id: number;
-  number: string;
-  name: string;
-}
+import {
+  Condominium,
+  getCondominiums,
+  getCondominium,
+  CondominiumDetail,
+} from '../../services/condominiumService';
+import { Tower, getTowersByCondominium } from '../../services/towerService';
+import { UserSearchResult, searchUsersInCondominium } from '../../services/userService';
 
 const MessageComposerForm: React.FC = () => {
   const navigate = useNavigate();
@@ -36,17 +36,14 @@ const MessageComposerForm: React.FC = () => {
     getUserTypeDescriptionByName,
   } = usePermissions();
 
-  const [condominiums, setCondominiums] = useState([]);
+  const [condominiums, setCondominiums] = useState<Condominium[]>([]);
 
   const [currentUserCondominium, setCurrentUserCondominium] =
-    useState<any>(null);
+    useState<CondominiumDetail | null>(null);
 
   useEffect(() => {
     const fetchCondominiums = async () => {
       try {
-        const headers = getAuthHeaders();
-        if (!headers.Authorization) return;
-
         const userString = localStorage.getItem('user');
         if (!userString) return;
 
@@ -56,21 +53,10 @@ const MessageComposerForm: React.FC = () => {
         };
 
         if (user.role == 'SystemAdministrator') {
-          const response = await fetch(`${config.apiUrl}/Condominium`, {
-            method: 'GET',
-            headers,
-          });
-          const data = await response.json();
+          const data = await getCondominiums();
           setCondominiums(data);
         } else if (user.condominiumId) {
-          const response = await fetch(
-            `${config.apiUrl}/Condominium/${user.condominiumId}`,
-            {
-              method: 'GET',
-              headers,
-            },
-          );
-          const data = await response.json();
+          const data = await getCondominium(user.condominiumId);
           setCurrentUserCondominium(data);
         }
       } catch (error) {
@@ -101,20 +87,7 @@ const MessageComposerForm: React.FC = () => {
 
       setIsLoadingTowers(true);
       try {
-        const headers = getAuthHeaders();
-        if (!headers.Authorization) return;
-
-        const response = await fetch(
-          `${config.apiUrl}/Tower/byCondominium/${condominiumId}`,
-          {
-            method: 'GET',
-            headers,
-          },
-        );
-
-        if (!response.ok) throw new Error('Failed to load towers');
-
-        const data = await response.json();
+        const data = await getTowersByCondominium(condominiumId);
         setTowers(data);
       } catch (error) {
         console.error('Error loading towers:', error);
@@ -146,20 +119,11 @@ const MessageComposerForm: React.FC = () => {
     }));
   };
 
-  type UserProfileSearchResultDto = {
-    id: number;
-    name: string;
-    registrationNumber?: string;
-    type: string;
-  };
-
   const [searchTerm, setSearchTerm] = useState({
     name: '',
     registrationNumber: '',
   });
-  const [searchResults, setSearchResults] = useState<
-    UserProfileSearchResultDto[]
-  >([]);
+  const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -191,12 +155,6 @@ const MessageComposerForm: React.FC = () => {
 
       params.append('Type', getUserTypeId(selectedRecipientType).toString());
 
-      const headers = getAuthHeaders();
-
-      if (!headers.Authorization) {
-        return;
-      }
-
       const userString = localStorage.getItem('user');
       if (!userString) {
         return;
@@ -204,14 +162,7 @@ const MessageComposerForm: React.FC = () => {
 
       const user = JSON.parse(userString) as { condominiumId: number };
 
-      var fullUrl = `${config.apiUrl}/Condominium/${user.condominiumId}/users/search?${params}`;
-
-      console.log(`Searching url: ${fullUrl}`);
-
-      const response = await fetch(fullUrl, {
-        headers: headers,
-      });
-      const data = await response.json();
+      const data = await searchUsersInCondominium(user.condominiumId, params);
       if (data.length == 0) {
         setError('No results found');
         return;
