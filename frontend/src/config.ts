@@ -22,5 +22,8 @@ const config = {
     : process.env.REACT_APP_WS_URL || 'ws://localhost:5254/ws',
 };
 
-console.log('Ambiente:', isDocker ? 'Docker' : 'Local', config);
+if (process.env.NODE_ENV !== 'production') {
+  console.log('Ambiente:', isDocker ? 'Docker' : 'Local', config);
+}
+
 export default config;
