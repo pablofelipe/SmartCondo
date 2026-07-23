@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import { useAuth, User } from './AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -12,9 +13,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole,
   requiredPermission,
 }) => {
-  const token = localStorage.getItem('token');
-  const userData = localStorage.getItem('user');
-  const user = userData ? JSON.parse(userData) : null;
+  const { token, user } = useAuth();
 
   if (!token || !user) {
     return <Navigate to="/login" replace />;
@@ -24,7 +23,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/dashboard" replace />;
   }
 
-  if (requiredPermission && !user.permissions[requiredPermission]) {
+  if (
+    requiredPermission &&
+    !user.permissions[requiredPermission as keyof User['permissions']]
+  ) {
     return <Navigate to="/dashboard" replace />;
   }
 

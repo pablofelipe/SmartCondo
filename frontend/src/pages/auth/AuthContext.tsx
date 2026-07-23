@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
-interface User {
+export interface User {
   id: number;
   email: string;
   condominiumId: number;
@@ -44,18 +44,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Recupera dados do localStorage ao inicializar
-    const storedToken = localStorage.getItem('token');
+  // Read synchronously on first render (not via useEffect) so a stored session
+  // is available on the very first render - consumers like ProtectedRoute must
+  // not see a transient "logged out" state before an effect has a chance to run.
+  const [user, setUser] = useState<User | null>(() => {
     const storedUser = localStorage.getItem('user');
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+  const [token, setToken] = useState<string | null>(() =>
+    localStorage.getItem('token'),
+  );
 
   const login = (newToken: string, userData: User) => {
     localStorage.setItem('token', newToken);
