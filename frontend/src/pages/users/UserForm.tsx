@@ -20,8 +20,16 @@ import {
   CondominiumDetail,
 } from '../../services/condominiumService';
 import { getTowersByCondominium, Tower } from '../../services/towerService';
-
-type UserFormMode = 'create' | 'edit' | 'view';
+import {
+  UserFormMode,
+  UserData,
+  LoginData,
+  UserFormDTO,
+  UserFormErrors,
+} from './UserForm.types';
+import { UserLoginFields } from './UserLoginFields';
+import { UserProfileFields } from './UserProfileFields';
+import { UserLocationFields } from './UserLocationFields';
 
 interface UserFormProps {
   mode?: UserFormMode;
@@ -31,20 +39,6 @@ interface UserFormProps {
 const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
   const navigate = useNavigate();
   const isViewMode = mode == 'view';
-
-  interface UserData {
-    name: string;
-    address: string;
-    userTypeId: number;
-    registrationNumber: string;
-    phone1: string;
-    phone2: string;
-    condominiumId?: number;
-    towerId?: number;
-    floorId?: number;
-    apartment?: number;
-    parkingSpaceNumber?: number;
-  }
 
   const [userData, setUserData] = useState<UserData>({
     name: '',
@@ -60,18 +54,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
     parkingSpaceNumber: 0,
   });
 
-  interface LoginData {
-    email: string;
-    password: string;
-    confirmPassword: string;
-    expiration: string;
-    enabled: boolean;
-    keyId: string;
-    showPasswordFields: boolean;
-    passwordLength: number;
-  }
-
-  const [loginData, setLoginData] = useState({
+  const [loginData, setLoginData] = useState<LoginData>({
     email: '',
     password: '',
     confirmPassword: '',
@@ -81,15 +64,6 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
     showPasswordFields: false,
     passwordLength: 0,
   });
-
-  interface UserFormDTO extends UserData {
-    user: Omit<
-      LoginData,
-      'confirmPassword' | 'showPasswordFields' | 'passwordLength'
-    > & {
-      confirmPassword?: string;
-    };
-  }
 
   const [message, setMessage] = useState<{
     text: string;
@@ -101,7 +75,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
     useState<CondominiumDetail | null>(null);
   const [userTypes, setUserTypes] = useState<UserType[]>([]);
   const [towers, setTowers] = useState<Tower[]>([]);
-  const [errors, setErrors] = useState({
+  const [errors, setErrors] = useState<UserFormErrors>({
     email: '',
     registration: '',
     phone1: '',
@@ -122,7 +96,7 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const { canRegisterUser, canManageAllCondominiums } = usePermissions();
-  const filteredUserTypes = userTypes.filter((ut: any) =>
+  const filteredUserTypes = userTypes.filter((ut) =>
     canRegisterUser(ut.name),
   );
 
@@ -570,384 +544,41 @@ const UserForm = ({ mode = 'create', userId }: UserFormProps) => {
             <span className="main-form-title">User Registration</span>
 
             {/* Login fields */}
-            <div
-              className="wrap-input100 validate-input"
-              data-validate="Valid e-mail: a@b.c"
-            >
-              <input
-                className={`input100 ${loginData.email ? 'has-val' : ''}`}
-                autoComplete="off"
-                name="email"
-                type="email"
-                value={loginData.email}
-                onChange={handleLoginChange}
-                onBlur={handleBlur}
-                required
-                disabled={isViewMode}
-              />
-              <span className="focus-input100" data-placeholder="Email"></span>
-              {errors.email && <p className="error-message">{errors.email}</p>}
-            </div>
-
-            {/* Password field - edit/view version */}
-            {mode != 'create' && !loginData.showPasswordFields ? (
-              <div className="wrap-input100 validate-input">
-                <input
-                  autoComplete="off"
-                  className="input100 has-val"
-                  type="text"
-                  value={'*'.repeat(loginData.passwordLength)}
-                  readOnly
-                  disabled
-                />
-                <span
-                  className="focus-input100"
-                  data-placeholder="Password"
-                ></span>
-                {!isViewMode && (
-                  <button
-                    type="button"
-                    className="btn-change-password"
-                    onClick={handleChangePasswordClick}
-                    disabled={loading.changePassword}
-                  >
-                    {loading.changePassword ? 'Loading...' : 'Change Password'}
-                  </button>
-                )}
-              </div>
-            ) : (
-              <>
-                {/* New password field */}
-                <div
-                  className="wrap-input100 validate-input"
-                  data-validate="Password is required"
-                >
-                  <input
-                    className={`input100 ${
-                      loginData.password ? 'has-val' : ''
-                    }`}
-                    autoComplete="off"
-                    name="password"
-                    type="password"
-                    value={loginData.password}
-                    onChange={handleLoginChange}
-                    onBlur={handleBlur}
-                    required={mode == 'create'}
-                    disabled={isViewMode}
-                  />
-                  <span
-                    className="focus-input100"
-                    data-placeholder={mode == 'create' ? 'Password' : 'New Password'}
-                  ></span>
-                  {errors.password && (
-                    <p className="error-message">{errors.password}</p>
-                  )}
-                </div>
-
-                {/* Confirmation field */}
-                <div
-                  className="wrap-input100 validate-input"
-                  data-validate="Confirm the password"
-                >
-                  <input
-                    className={`input100 ${
-                      loginData.confirmPassword ? 'has-val' : ''
-                    }`}
-                    autoComplete="off"
-                    name="confirmPassword"
-                    type="password"
-                    value={loginData.confirmPassword}
-                    onChange={handleLoginChange}
-                    onBlur={handleBlur}
-                    required={mode == 'create'}
-                    disabled={isViewMode}
-                  />
-                  <span
-                    className="focus-input100"
-                    data-placeholder={
-                      mode == 'create'
-                        ? 'Confirm Password'
-                        : 'Confirm New Password'
-                    }
-                  ></span>
-                  {errors.confirmPassword && (
-                    <p className="error-message">{errors.confirmPassword}</p>
-                  )}
-                </div>
-
-                {/* Cancel password change button */}
-                {mode != 'create' && loginData.showPasswordFields && (
-                  <button
-                    type="button"
-                    className="btn-cancel-password"
-                    onClick={handleCancelPasswordChange}
-                    disabled={loading.changePassword}
-                  >
-                    Cancel Change
-                  </button>
-                )}
-              </>
-            )}
+            <UserLoginFields
+              mode={mode}
+              isViewMode={isViewMode}
+              loginData={loginData}
+              errors={errors}
+              isChangingPassword={loading.changePassword}
+              onChange={handleLoginChange}
+              onBlur={handleBlur}
+              onChangePasswordClick={handleChangePasswordClick}
+              onCancelPasswordChange={handleCancelPasswordChange}
+            />
 
             {/* User fields */}
-            <div
-              className="wrap-input100 validate-input"
-              data-validate="Name is required"
-            >
-              <input
-                className={`input100 ${userData.name ? 'has-val' : ''}`}
-                name="name"
-                type="text"
-                value={userData.name}
-                onChange={handleUserChange}
-                onBlur={handleBlur}
-                required
-                disabled={isViewMode}
-              />
-              <span className="focus-input100" data-placeholder="Name"></span>
-              {errors.name && <p className="error-message">{errors.name}</p>}
-            </div>
-
-            <div
-              className="wrap-input100 validate-input"
-              data-validate="Address is required"
-            >
-              <input
-                className={`input100 ${userData.address ? 'has-val' : ''}`}
-                name="address"
-                type="text"
-                value={userData.address}
-                onChange={handleUserChange}
-                onBlur={handleBlur}
-                required
-                disabled={isViewMode}
-              />
-              <span
-                className="focus-input100"
-                data-placeholder="Address"
-              ></span>
-              {errors.address && (
-                <p className="error-message">{errors.address}</p>
-              )}
-            </div>
-
-            <div
-              className="wrap-input100 validate-input"
-              data-validate="Registration number is required"
-            >
-              <input
-                className={`input100 ${
-                  userData.registrationNumber ? 'has-val' : ''
-                }`}
-                name="registrationNumber"
-                type="text"
-                value={userData.registrationNumber}
-                onChange={handleUserChange}
-                onBlur={handleBlur}
-                required
-                disabled={isViewMode}
-              />
-              <span
-                className="focus-input100"
-                data-placeholder="Registration number"
-              ></span>
-              {errors.registration && (
-                <p className="error-message">{errors.registration}</p>
-              )}
-            </div>
-
-            <div
-              className="wrap-input100 validate-input"
-              data-validate="Phone number is required"
-            >
-              <input
-                className={`input100 ${userData.phone1 ? 'has-val' : ''}`}
-                name="phone1"
-                type="text"
-                value={userData.phone1}
-                onChange={handleUserChange}
-                onBlur={handleBlur}
-                required
-                disabled={isViewMode}
-              />
-              <span
-                className="focus-input100"
-                data-placeholder="Phone"
-              ></span>
-              {errors.phone1 && (
-                <p className="error-message">{errors.phone1}</p>
-              )}
-            </div>
-
-            <div
-              className="wrap-input100 validate-input"
-              data-validate="User type is required"
-            >
-              <label htmlFor="user-type" className="input-label">
-                User Type
-              </label>
-              <select
-                className={`input100 ${userData.userTypeId ? 'has-val' : ''}`}
-                name="userTypeId"
-                value={userData.userTypeId}
-                onChange={handleUserChange}
-                onBlur={handleBlur}
-                required
-                disabled={isViewMode}
-              >
-                <option value="">Select</option>
-                {filteredUserTypes.map((ut: any) => (
-                  <option key={ut.id} value={ut.id}>
-                    {ut.description}
-                  </option>
-                ))}
-              </select>
-              <span
-                className="focus-input100"
-                data-placeholder="User Type"
-              ></span>
-            </div>
+            <UserProfileFields
+              isViewMode={isViewMode}
+              userData={userData}
+              errors={errors}
+              filteredUserTypes={filteredUserTypes}
+              onChange={handleUserChange}
+              onBlur={handleBlur}
+            />
 
             {/* Condominium, Tower, Floor and Apartment fields */}
-            {canManageAllCondominiums() && !isSysAdmin && (
-              <div className="wrap-input100 validate-input">
-                <label htmlFor="condominium" className="input-label">
-                  Condominium
-                </label>
-                <select
-                  className={`input100 ${
-                    userData.condominiumId ? 'has-val' : ''
-                  }`}
-                  name="condominiumId"
-                  value={userData.condominiumId}
-                  onChange={handleUserChange}
-                  required
-                  disabled={isViewMode}
-                >
-                  <option value="">Select</option>
-                  {condominiums.map((condo: any) => (
-                    <option key={condo.id} value={condo.id}>
-                      {condo.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {!canManageAllCondominiums() && currentUserCondominium && (
-              <div className="wrap-input100">
-                <label className="input-label">Condominium</label>
-                <input
-                  type="text"
-                  className="input100"
-                  value={currentUserCondominium.name}
-                  readOnly
-                />
-                <input
-                  type="hidden"
-                  name="condominiumId"
-                  value={currentUserCondominium.id}
-                />
-              </div>
-            )}
-
-            {isApartmentOwner && (
-              <>
-                <div
-                  className="wrap-input100 validate-input"
-                  data-validate="Tower is required"
-                >
-                  <label htmlFor="tower" className="input-label">
-                    Tower
-                  </label>
-                  <select
-                    className={`input100 ${userData.towerId ? 'has-val' : ''}`}
-                    name="towerId"
-                    value={userData.towerId}
-                    onChange={handleUserChange}
-                    onBlur={handleBlur}
-                    required={isApartmentOwner}
-                    disabled={
-                      !userData.condominiumId ||
-                      userData.condominiumId == 0 ||
-                      isViewMode
-                    }
-                  >
-                    <option value="">Select</option>
-                    {towers.map((tower: any) => (
-                      <option key={tower.id} value={tower.id}>
-                        {tower.number} - {tower.name}
-                      </option>
-                    ))}
-                  </select>
-                  <span
-                    className="focus-input100"
-                    data-placeholder="Tower"
-                  ></span>
-                </div>
-
-                <div
-                  className="wrap-input100 validate-input"
-                  data-validate="Floor is required"
-                >
-                  <input
-                    className={`input100 ${userData.floorId ? 'has-val' : ''}`}
-                    name="floorId"
-                    type="number"
-                    value={userData.floorId}
-                    onChange={handleUserChange}
-                    onBlur={handleBlur}
-                    required={isApartmentOwner}
-                  />
-                  <span
-                    className="focus-input100 focus-number"
-                    data-placeholder="Floor"
-                  ></span>
-                </div>
-
-                <div
-                  className="wrap-input100 validate-input"
-                  data-validate="Apartment is required"
-                >
-                  <input
-                    className={`input100 ${
-                      userData.apartment ? 'has-val' : ''
-                    }`}
-                    name="apartment"
-                    type="number"
-                    value={userData.apartment}
-                    onChange={handleUserChange}
-                    onBlur={handleBlur}
-                    required={isApartmentOwner}
-                  />
-                  <span
-                    className="focus-input100 focus-number"
-                    data-placeholder="Apartment"
-                  ></span>
-                </div>
-
-                <div
-                  className="wrap-input100 validate-input"
-                  data-validate="Parking space number is required"
-                >
-                  <input
-                    className={`input100 ${
-                      userData.parkingSpaceNumber ? 'has-val' : ''
-                    }`}
-                    name="parkingSpaceNumber"
-                    type="number"
-                    value={userData.parkingSpaceNumber}
-                    onChange={handleUserChange}
-                    onBlur={handleBlur}
-                    required={isApartmentOwner}
-                  />
-                  <span
-                    className="focus-input100 focus-number"
-                    data-placeholder="Parking Space"
-                  ></span>
-                </div>
-              </>
-            )}
+            <UserLocationFields
+              isViewMode={isViewMode}
+              canManageAllCondominiums={canManageAllCondominiums()}
+              isSysAdmin={isSysAdmin}
+              isApartmentOwner={isApartmentOwner}
+              userData={userData}
+              condominiums={condominiums}
+              currentUserCondominium={currentUserCondominium}
+              towers={towers}
+              onChange={handleUserChange}
+              onBlur={handleBlur}
+            />
 
             {(mode == 'create' || mode == 'edit') && (
               <div className="container-btn100-form-btn">
