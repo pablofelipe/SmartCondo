@@ -4,8 +4,12 @@ import '../../styles/util.css';
 import './condominiumForm.css';
 import { usePermissions } from '../hooks/usePermissions';
 import { DeleteConfirmationModal } from '../../utils/DeleteConfirmationModal';
-import config from '../../config';
-import { getAuthHeaders } from '../../utils/ApiUtils';
+import {
+  getCondominium,
+  createCondominium,
+  updateCondominium,
+  deleteCondominium,
+} from '../../services/condominiumService';
 
 type CondominiumFormMode = 'create' | 'edit' | 'view';
 
@@ -77,17 +81,7 @@ const CondominiumForm = ({
   useEffect(() => {
     const fetchCondominiumData = async () => {
       try {
-        const response = await fetch(
-          `${config.apiUrl}/Condominium/${condominiumId}`,
-          {
-            method: 'GET',
-            headers: getAuthHeaders(),
-          },
-        );
-
-        if (!response.ok) throw new Error('Failed to fetch condominium');
-
-        const data = await response.json();
+        const data = await getCondominium(condominiumId!);
         setCondominiumData({
           name: data.name,
           address: data.address,
@@ -144,24 +138,10 @@ const CondominiumForm = ({
         })),
       };
 
-      const method = mode === 'create' ? 'POST' : 'PUT';
-      const url =
+      const data =
         mode === 'create'
-          ? `${config.apiUrl}/Condominium`
-          : `${config.apiUrl}/Condominium/${condominiumId}`;
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          ...getAuthHeaders(),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(condoPayload),
-      });
-
-      if (!response.ok) throw new Error(await response.text());
-
-      const data = await response.json();
+          ? await createCondominium(condoPayload)
+          : await updateCondominium(condominiumId!, condoPayload);
 
       if (mode === 'create') {
         navigate(`/condominiums/${data.id}/edit`);
@@ -188,10 +168,7 @@ const CondominiumForm = ({
     setLoading((prev) => ({ ...prev, delete: true }));
 
     try {
-      await fetch(`${config.apiUrl}/Condominium/${condominiumId}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
+      await deleteCondominium(condominiumId!);
       navigate('/condominiums');
     } catch (error) {
       setMessage({ text: 'Error deleting condominium', type: 'error' });

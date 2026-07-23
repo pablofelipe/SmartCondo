@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePermissions } from '../hooks/usePermissions';
-import config from '../../config';
-import { getAuthHeaders } from '../../utils/ApiUtils';
+import {
+  Condominium,
+  searchCondominiums,
+} from '../../services/condominiumService';
 import './condominiumList.module.css';
 
 const CondominiumListPage = () => {
@@ -10,7 +12,7 @@ const CondominiumListPage = () => {
   const [searchTerm, setSearchTerm] = useState({
     name: '',
   });
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<Condominium[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState('');
@@ -34,23 +36,8 @@ const CondominiumListPage = () => {
     setError('');
 
     try {
-      const params = new URLSearchParams();
-      params.append('Name', searchTerm.name);
-
-      const headers = getAuthHeaders();
-      if (!headers.Authorization) return;
-
-      const fullUrl = `${config.apiUrl}/Condominium/search?${params}`;
-
-      const response = await fetch(fullUrl, {
-        method: 'GET',
-        headers: headers,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(data);
-      }
+      const data = await searchCondominiums(searchTerm.name);
+      setSearchResults(data);
     } catch (error) {
       console.error('Search error:', error);
       setError('An error occurred while searching');
@@ -132,7 +119,7 @@ const CondominiumListPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {searchResults.map((condominium: any) => (
+                      {searchResults.map((condominium) => (
                         <tr key={condominium.id}>
                           <td>{condominium.name}</td>
                           <td>{condominium.address}</td>
