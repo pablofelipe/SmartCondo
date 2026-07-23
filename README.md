@@ -11,6 +11,8 @@ Condominium administration platform that simplifies user management, communicati
 
 SmartCondo is a full-stack application for managing residential condominiums. A condominium administrator registers towers, apartments, residents and vehicles; residents exchange messages with the administration and receive notifications. Access is governed by a hierarchical role model (system administrator → condominium administrator → resident and staff roles), enforced on every endpoint.
 
+SmartCondo follows Semantic Versioning. The project is feature-complete for its current scope, but the public API is still pre-1.0 and may change between minor releases — see [Versioning](#versioning) for what changes before 1.0.
+
 The project is organized as a monorepo:
 
 ```text
@@ -122,10 +124,19 @@ The canonical deployment target is a single Docker image, run unmodified on eith
 
 **Non-goals (deliberate, see [trade-offs](docs/architecture/overview.md#trade-offs)):**
 - Kubernetes, a metrics/tracing stack (Prometheus/Grafana), asynchronous messaging, additional cloud providers, CI/CD automation of the deploy
-- Frontend component tests — the business complexity is intentionally concentrated in the backend, where it is extensively covered by automated tests; the frontend is a deliberately thin CRUD client over that API
+- Exhaustive frontend UI/component test coverage — the business complexity is intentionally concentrated in the backend, where it is extensively covered by automated tests; the frontend is a deliberately thin CRUD client over that API. Security- and state-critical frontend paths (route guards, auth context, WebSocket reconnection) are the exception and are tested.
 
 **Technical debt:**
 - Lambda hosting mode is not required to keep feature parity with the container-first path going forward (accepted tradeoff, ADR-0011)
+
+## Versioning
+
+SmartCondo follows [Semantic Versioning](https://semver.org/). The project is feature-complete for its current scope, but the public API is still considered pre-1.0 and may evolve between minor releases until a stable contract is explicitly declared. See [CHANGELOG.md](CHANGELOG.md) for the history of changes per release.
+
+**Road to 1.0** — SmartCondo will move to 1.0 when:
+- the public REST/GraphQL contracts are declared stable;
+- a backward-compatibility policy is documented;
+- at least one release cycle passes without a breaking API change.
 
 ## License
 
