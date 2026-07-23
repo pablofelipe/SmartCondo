@@ -6,8 +6,7 @@ import '../../fonts/iconic/css/material-design-iconic-font.css';
 import '../../fonts/iconic/css/style.css';
 import { useAuth } from '../auth/AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
-import config from '../../config';
-import { getAuthHeaders } from '../../utils/ApiUtils';
+import { getDashboardStats } from '../../services/dashboardService';
 
 const Dashboard = () => {
   const { logout } = useAuth();
@@ -38,18 +37,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const headers = getAuthHeaders();
-
-        if (!headers.Authorization) {
-          return;
-        }
-
-        const response = await fetch(`${config.apiUrl}/dashboard/stats`, {
-          method: 'GET',
-          headers: headers,
-        });
-
-        const data = await response.json();
+        const data = await getDashboardStats();
         setStats(data);
       } catch (error) {
         console.error('Error loading dashboard stats:', error);
