@@ -1,13 +1,25 @@
-// hooks/useWebSocket.js
+import { useCallback, useEffect, useRef } from 'react';
 import config from '../../config';
-import { useEffect, useRef, useCallback } from 'react';
 
-export const useWebSocket = (userId, onMessage) => {
-  const ws = useRef(null);
+export interface WebSocketMessage {
+  type: string;
+  [key: string]: unknown;
+}
+
+export const useWebSocket = (
+  userId: number | null,
+  onMessage: (data: WebSocketMessage) => void,
+) => {
+  const ws = useRef<WebSocket | null>(null);
+  const onMessageRef = useRef(onMessage);
+
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
 
   const connect = useCallback(() => {
     const token = localStorage.getItem('token');
-    const websocketUrl = `${config.websocketUrl}?token=${encodeURIComponent(token)}`;
+    const websocketUrl = `${config.websocketUrl}?token=${encodeURIComponent(token ?? '')}`;
 
     ws.current = new WebSocket(websocketUrl);
 
@@ -17,10 +29,10 @@ export const useWebSocket = (userId, onMessage) => {
       localStorage.setItem('websocket_connected', 'true');
     };
 
-    ws.current.onmessage = (event) => {
+    ws.current.onmessage = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
-        onMessage(data);
+        onMessageRef.current(data);
       } catch (error) {
         console.error('Error processing message:', error);
       }
@@ -34,10 +46,10 @@ export const useWebSocket = (userId, onMessage) => {
       setTimeout(() => connect(), 5000);
     };
 
-    ws.current.onerror = (error) => {
+    ws.current.onerror = (error: Event) => {
       console.error('WebSocket error:', error);
     };
-  }, [onMessage]);
+  }, []);
 
   useEffect(() => {
     if (userId) {
