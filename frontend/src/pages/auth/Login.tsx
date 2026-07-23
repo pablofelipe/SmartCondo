@@ -1,7 +1,7 @@
 import { useAuth } from './AuthContext';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import config from '../../config';
+import { login as loginRequest } from '../../services/authService';
 
 import '../../styles/util.css';
 import '../../styles/login.css';
@@ -30,42 +30,7 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const secret = secretScreen;
-
-      const response = await fetch(`${config.apiUrl}/Auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ user, secret }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json(); // Capture the error message from the backend
-        const errorMessage = errorData.message || 'Unknown error';
-
-        switch (response.status) {
-          case 400: // BadRequest (InvalidCredentialsException)
-            throw new Error(errorMessage || 'Invalid credentials.');
-
-          case 401: // Unauthorized (UserDisabledException, UserExpiredException, IncorrectPasswordException)
-            throw new Error(errorMessage || 'Unauthorized access.');
-
-          case 404: // NotFound (UserNotFoundException)
-            throw new Error(errorMessage || 'User not found.');
-
-          case 500: // InternalServerError (generic Exception)
-            throw new Error(
-              errorMessage ||
-                'A server error occurred. Please try again later.',
-            );
-
-          default:
-            throw new Error('Unexpected error.');
-        }
-      }
-
-      const data = await response.json();
+      const data = await loginRequest(user, secretScreen);
 
       login(data.token, data.user);
 

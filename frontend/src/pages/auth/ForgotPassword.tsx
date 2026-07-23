@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import config from '../../config';
+import { forgotPassword } from '../../services/authService';
 
 import '../../styles/forgotPassword.css';
 import '../../styles/util.css';
@@ -19,22 +19,7 @@ const ForgotPassword: React.FC = () => {
     setMessage('');
 
     try {
-      const response = await fetch(
-        `${config.apiUrl}/ForgotPassword/forgot-password`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email }),
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to send the e-mail.');
-      }
+      const data = await forgotPassword(email);
 
       setMessage(
         data.message || 'A reset link has been sent to your e-mail.',

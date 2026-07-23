@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import config from '../../config';
+import { resetPassword } from '../../services/authService';
 
 import '../../styles/resetPassword.css';
 import '../../styles/util.css';
@@ -36,27 +36,11 @@ const ResetPassword: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `${config.apiUrl}/ForgotPassword/reset-password`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId,
-            token,
-            password: password,
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to reset the password.');
+      if (!userId || !token) {
+        throw new Error('Invalid or expired link');
       }
 
-      const data = await response.json();
+      const data = await resetPassword(userId, token, password);
       setMessage(data.message || 'Password reset successfully!');
       setError('');
     } catch (err: any) {
